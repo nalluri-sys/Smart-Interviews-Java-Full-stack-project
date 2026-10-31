@@ -1,0 +1,39 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: smart-interview-coach
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+
+app:
+  frontend-url: ${FRONTEND_URL:http://localhost:5500}
+  supabase:
+    url: ${SUPABASE_URL:https://your-project.supabase.co}
+    anon-key: ${SUPABASE_ANON_KEY:your-anon-key}
+    service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:your-service-role-key}
+  gemini:
+    api-key: ${GEMINI_API_KEY:your-gemini-api-key}
+    model: ${GEMINI_MODEL:gemini-2.0-flash}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  level:
+    com.smartinterviewcoach: INFO
+    org.springframework.security: WARN

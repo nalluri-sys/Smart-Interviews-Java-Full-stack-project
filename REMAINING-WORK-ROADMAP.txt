@@ -1,0 +1,959 @@
+SMART INTERVIEW COACH
+REMAINING WORK AND IMPLEMENTATION ROADMAP
+==========================================
+
+AUTHENTICATION DECISION
+-----------------------
+
+Supabase is the sole authentication, database, storage, and application
+backend platform. Firebase is not used. Gemini API calls remain server-side
+through the Java backend, and the browser uses the Supabase anon key only.
+
+Purpose
+-------
+
+This file documents the remaining work required to turn the current frontend
+prototype into a complete production-ready Smart Interview Coach application.
+
+MANDATORY TECHNOLOGY CONSTRAINT
+-------------------------------
+
+This project must be implemented as a JAVA FULL STACK application only.
+
+Required technology direction:
+
+- Frontend: HTML, CSS, and JavaScript.
+- Backend: Java 17+ with Spring Boot.
+- API layer: Spring Web / Spring MVC.
+- Security: Spring Security with Firebase token verification.
+- Database access: Spring Data JPA or Spring JDBC.
+- Validation: Jakarta Bean Validation.
+- Testing: JUnit 5, Mockito, and Spring Boot Test.
+- Build tool: Maven or Gradle.
+
+Node.js, Express, Mongoose, or a Node-only backend must not be used for the
+production implementation. The existing JavaScript files are frontend browser
+code only and are not a replacement for the Java backend.
+
+Current implementation already includes:
+
+- Responsive frontend design.
+- Login and registration screens.
+- Resume/manual onboarding UI.
+- Local resume profile data storage.
+- Dashboard, profile, reports, and My Interviews pages.
+- Interview setup page.
+- Working local interview room.
+- Timer and question navigation.
+- Local answer submission.
+- Local score generation.
+- Local report generation.
+- Professional navigation and animations.
+
+The current interview and authentication behavior is frontend-only and uses
+localStorage. It must be replaced or connected to secure backend services.
+
+
+1. RECOMMENDED FINAL ARCHITECTURE
+---------------------------------
+
+Frontend:
+
+- Existing HTML, CSS, and JavaScript frontend.
+- Use Firebase Authentication for identity.
+- Use Firebase Google Sign-In.
+- Use Firebase Phone Authentication with SMS OTP.
+- Use Supabase for application data.
+- Use a secure backend API for Gemini calls and file processing.
+
+Authentication:
+
+- Firebase Authentication is the identity provider.
+- Firebase handles:
+  - Email/password authentication.
+  - Google authentication.
+  - Mobile phone SMS OTP authentication.
+- Store the Firebase user UID in Supabase.
+- Never store raw passwords in Supabase.
+
+Database:
+
+- Supabase Postgres stores website data.
+- Supabase Storage stores resumes and generated report files.
+- Supabase Row Level Security protects user-owned records.
+
+Backend:
+
+- Java 17+ Spring Boot REST API.
+- Gemini API calls must run on the backend.
+- Firebase Admin SDK verifies Firebase ID tokens.
+- Supabase service role key remains backend-only.
+- Backend validates ownership before reading or changing data.
+
+
+2. FIREBASE AUTHENTICATION
+--------------------------
+
+Firebase project setup:
+
+- Create a Firebase project.
+- Add a Web application.
+- Enable Email/Password provider.
+- Enable Google provider.
+- Enable Phone provider.
+- Configure authorized domains.
+- Configure SMS region policy.
+- Configure reCAPTCHA requirements for phone login.
+- Configure development and production environments.
+
+Frontend Firebase setup:
+
+- Install the Firebase JavaScript SDK.
+- Add a frontend Firebase configuration module.
+- Initialize Firebase App.
+- Initialize Firebase Auth.
+- Add GoogleAuthProvider.
+- Add RecaptchaVerifier for phone authentication.
+
+Google authentication:
+
+- Add a "Continue with Google" flow.
+- Open Firebase Google popup or redirect login.
+- Handle popup cancellation.
+- Handle account-disabled errors.
+- Handle unauthorized-domain errors.
+- Send Firebase ID token to the backend.
+- Create or update the Supabase user profile.
+- Redirect authenticated users to the dashboard.
+
+Mobile SMS OTP authentication:
+
+- Add phone number input with country code.
+- Validate E.164 phone number format.
+- Render reCAPTCHA verifier.
+- Send SMS OTP using Firebase.
+- Show resend OTP timer.
+- Limit repeated OTP requests.
+- Verify OTP securely through Firebase.
+- Handle invalid-code errors.
+- Handle expired-code errors.
+- Handle quota errors.
+- Handle blocked-request errors.
+- Add accessible OTP input fields.
+- Add a change-number option.
+- Store verified phone status in the profile.
+
+Authentication state:
+
+- Listen to Firebase onAuthStateChanged.
+- Redirect unauthenticated users away from private pages.
+- Redirect authenticated users away from login/register pages.
+- Refresh ID tokens before protected API requests.
+- Clear cached session data on logout.
+- Revoke backend session state where applicable.
+
+Required frontend files:
+
+- frontend/js/firebase-config.js
+- frontend/js/firebase-auth.js
+- frontend/js/route-guard.js
+- frontend/phone-login.html
+- frontend/verify-phone.html
+
+Environment variables:
+
+- Firebase web configuration values may be exposed as frontend config.
+- Firebase Admin credentials must never be exposed.
+- Do not commit private service account JSON files.
+
+
+3. SUPABASE DATABASE SETUP
+---------------------------
+
+Create a Supabase project and configure:
+
+- Database password.
+- Project URL.
+- Anonymous public key.
+- Backend service role key.
+- Storage buckets.
+- Authentication integration metadata.
+- Database backups.
+
+Recommended database tables:
+
+profiles:
+
+- id UUID primary key.
+- firebase_uid TEXT unique not null.
+- email TEXT.
+- full_name TEXT.
+- phone_number TEXT.
+- phone_verified BOOLEAN default false.
+- avatar_url TEXT.
+- target_role TEXT.
+- experience_level TEXT.
+- profile_source TEXT.
+- career_goals TEXT.
+- skills TEXT[].
+- ai_profile JSONB.
+- profile_status TEXT.
+- created_at TIMESTAMPTZ.
+- updated_at TIMESTAMPTZ.
+
+resumes:
+
+- id UUID primary key.
+- user_id UUID references profiles(id).
+- original_name TEXT.
+- storage_path TEXT.
+- mime_type TEXT.
+- file_size INTEGER.
+- extracted_text TEXT.
+- parsed_profile JSONB.
+- analysis_status TEXT.
+- analysis_error TEXT.
+- created_at TIMESTAMPTZ.
+- analyzed_at TIMESTAMPTZ.
+
+interviews:
+
+- id UUID primary key.
+- user_id UUID references profiles(id).
+- role TEXT.
+- interview_type TEXT.
+- difficulty TEXT.
+- experience_level TEXT.
+- language TEXT.
+- duration_seconds INTEGER.
+- question_count INTEGER.
+- status TEXT.
+- overall_score NUMERIC.
+- started_at TIMESTAMPTZ.
+- completed_at TIMESTAMPTZ.
+- created_at TIMESTAMPTZ.
+
+interview_questions:
+
+- id UUID primary key.
+- interview_id UUID references interviews(id).
+- position INTEGER.
+- question_text TEXT.
+- category TEXT.
+- difficulty TEXT.
+- expected_topics TEXT[].
+- answer_text TEXT.
+- transcript TEXT.
+- score NUMERIC.
+- evaluation JSONB.
+- created_at TIMESTAMPTZ.
+
+reports:
+
+- id UUID primary key.
+- interview_id UUID references interviews(id).
+- user_id UUID references profiles(id).
+- overall_score NUMERIC.
+- breakdown JSONB.
+- strengths TEXT[].
+- improvements TEXT[].
+- recommendations TEXT[].
+- report_data JSONB.
+- created_at TIMESTAMPTZ.
+
+bookmarks:
+
+- id UUID primary key.
+- user_id UUID references profiles(id).
+- question_id UUID references interview_questions(id).
+- note TEXT.
+- created_at TIMESTAMPTZ.
+
+goals:
+
+- id UUID primary key.
+- user_id UUID references profiles(id).
+- goal_type TEXT.
+- target_value INTEGER.
+- current_value INTEGER.
+- period_start DATE.
+- period_end DATE.
+- status TEXT.
+- created_at TIMESTAMPTZ.
+
+notifications:
+
+- id UUID primary key.
+- user_id UUID references profiles(id).
+- notification_type TEXT.
+- title TEXT.
+- message TEXT.
+- read_at TIMESTAMPTZ.
+- created_at TIMESTAMPTZ.
+
+achievements:
+
+- id UUID primary key.
+- user_id UUID references profiles(id).
+- achievement_code TEXT.
+- unlocked_at TIMESTAMPTZ.
+
+practice_activity:
+
+- id UUID primary key.
+- user_id UUID references profiles(id).
+- activity_date DATE not null.
+- interview_count INTEGER default 0.
+- completed_count INTEGER default 0.
+- total_practice_seconds INTEGER default 0.
+- created_at TIMESTAMPTZ.
+- updated_at TIMESTAMPTZ.
+- Unique constraint on (user_id, activity_date).
+
+Profile practice heat map:
+
+- Add a GitHub-style 12-week activity heat map to the Profile page.
+- Render one cell per calendar day and show the number of completed interview
+  sessions for that date through an accessible label and tooltip.
+- Use five visual intensity levels based on daily practice count.
+- Start new profiles at zero activity with a clear "0 sessions" summary.
+- Calculate the current streak and total active days from persisted activity data,
+  rather than from browser-only counters.
+- Provide an API endpoint such as GET /api/profile/activity?weeks=12 for the
+  authenticated user.
+- Update the activity record whenever an interview is completed, including
+  duration and completion status.
+- Apply Supabase Row Level Security so users can only read their own activity.
+- Keep the Supabase service-role key and activity aggregation logic in the
+  Java Spring Boot backend; never expose them in frontend code.
+
+job_descriptions:
+
+- id UUID primary key.
+- user_id UUID references profiles(id).
+- title TEXT.
+- company TEXT.
+- description TEXT.
+- extracted_requirements JSONB.
+- created_at TIMESTAMPTZ.
+
+Supabase security:
+
+- Enable Row Level Security on every user-owned table.
+- Add policies based on the authenticated application user ID.
+- Do not use the Supabase service role key in the browser.
+- Use backend API access for privileged operations.
+- Restrict Storage objects to the owning user.
+- Add retention and deletion policies for resumes.
+
+
+4. JAVA SPRING BOOT BACKEND FOUNDATION
+---------------------
+
+Replace the temporary JavaScript backend scaffold with a Java Spring Boot
+backend. The production source tree should follow this structure:
+
+backend-java/
+  pom.xml
+  src/main/java/com/smartinterviewcoach/
+    SmartInterviewCoachApplication.java
+    config/
+    controller/
+    dto/
+    entity/
+    repository/
+    service/
+    security/
+    exception/
+  src/main/resources/
+    application.yml
+    application-local.yml
+    application-prod.yml
+
+Install backend dependencies:
+
+- spring-boot-starter-web
+- spring-boot-starter-security
+- spring-boot-starter-validation
+- spring-boot-starter-data-jpa
+- PostgreSQL JDBC driver
+- Firebase Admin Java SDK
+- Supabase Java client or secure Supabase REST integration
+- Google GenAI Java SDK or Gemini REST client
+- Apache PDFBox for PDF extraction
+- Apache POI for DOCX extraction
+- Jackson for structured JSON
+- Spring-compatible rate limiting
+- JUnit 5, Mockito, and Spring Boot Test
+
+Backend startup:
+
+- Load configuration with Spring profiles and environment variables.
+- Configure CORS with an allowlist.
+- Configure Spring Security.
+- Configure multipart upload size limits.
+- Configure rate limiting.
+- Add an Actuator health endpoint.
+- Add @ControllerAdvice centralized exception handling.
+- Add request logging without sensitive data.
+- Add DTO validation with Jakarta Bean Validation.
+
+Required environment variables:
+
+- PORT
+- FRONTEND_URL
+- FIREBASE_PROJECT_ID
+- FIREBASE_CLIENT_EMAIL
+- FIREBASE_PRIVATE_KEY
+- SUPABASE_URL
+- SUPABASE_SERVICE_ROLE_KEY
+- SUPABASE_ANON_KEY
+- GEMINI_API_KEY
+- GEMINI_MODEL
+
+Never commit .env files or service account credentials.
+
+
+5. FIREBASE TOKEN VERIFICATION
+------------------------------
+
+Implement backend auth middleware:
+
+- Read Authorization Bearer token.
+- Verify token with Firebase Admin SDK.
+- Reject missing token with 401.
+- Reject invalid token with 401.
+- Reject disabled user with 403.
+- Attach firebase UID and email to request.
+- Resolve the corresponding Supabase profile.
+- Reject access if profile ownership does not match.
+
+Apply this middleware to:
+
+- Profile routes.
+- Resume routes.
+- Interview routes.
+- Report routes.
+- Bookmark routes.
+- Goal routes.
+- Notification routes.
+
+
+6. GEMINI API INTEGRATION
+-------------------------
+
+Create backend/services/geminiService.js.
+
+Gemini responsibilities:
+
+- Analyze resumes.
+- Extract candidate profile information.
+- Generate interview questions.
+- Generate follow-up questions.
+- Evaluate answers.
+- Generate interview feedback.
+- Generate learning plans.
+- Analyze job descriptions.
+- Match resume skills to job requirements.
+
+Resume analysis prompt output:
+
+- Candidate summary.
+- Recommended roles.
+- Technical skills.
+- Soft skills.
+- Experience level.
+- Projects.
+- Education.
+- Certifications.
+- Strengths.
+- Skill gaps.
+- Interview focus areas.
+- Suggested difficulty.
+
+Require Gemini structured JSON output.
+
+Validate every response with a schema.
+
+Reject malformed or unsafe AI output.
+
+Do not trust AI-generated values for authorization or database ownership.
+
+Gemini error handling:
+
+- Handle API timeout.
+- Handle rate limits.
+- Handle unavailable model.
+- Handle invalid API key.
+- Handle malformed output.
+- Retry only safe transient errors.
+- Use exponential backoff.
+- Set maximum token limits.
+- Log request ID and error category, not resume content.
+- Show a user-friendly status.
+- Save analysis_status as failed if processing fails.
+
+Suggested Gemini service methods:
+
+- analyzeResume(text, metadata)
+- generateQuestions(profile, interviewConfig)
+- evaluateAnswer(question, answer, profile)
+- generateFollowUp(question, answer)
+- generateReport(interviewData)
+- analyzeJobDescription(description, profile)
+- generateLearningPlan(report, profile)
+
+
+7. RESUME PROCESSING PIPELINE
+-----------------------------
+
+Registration flow:
+
+1. User authenticates with Firebase.
+2. User submits manual details or uploads a resume.
+3. Frontend requests a signed upload URL or sends a protected multipart request.
+4. Backend validates file type and size.
+5. Backend stores the file in Supabase Storage.
+6. Backend extracts text from PDF or DOCX.
+7. Backend sanitizes extracted text.
+8. Backend creates a resume record.
+9. Backend sends sanitized text to Gemini.
+10. Backend validates the AI result.
+11. Backend saves the generated profile.
+12. Backend sets profile_status to completed.
+13. Frontend polls or receives completion status.
+14. User sees recommended roles and interview topics.
+
+Supported formats:
+
+- PDF.
+- DOCX.
+- TXT.
+
+Security:
+
+- Reject executable files.
+- Validate MIME type and extension.
+- Limit file size to 5 MB.
+- Generate random storage filenames.
+- Do not use the original filename as a path.
+- Do not expose public resume URLs.
+- Use expiring signed URLs.
+- Delete temporary files after processing.
+
+
+8. FRONTEND PROFILE ONBOARDING
+------------------------------
+
+Connect the current register page to the backend:
+
+- Replace localStorage-only profile saving.
+- Create Firebase user.
+- Upload resume securely.
+- Save manual profile values.
+- Show upload progress.
+- Show AI analysis progress.
+- Show processing state.
+- Show completed profile summary.
+- Show failed analysis retry action.
+- Allow the user to continue without a resume.
+- Allow resume replacement later.
+- Show clear consent and privacy wording.
+
+Add onboarding result page:
+
+- frontend/profile-analysis.html
+
+Display:
+
+- AI-generated summary.
+- Suggested roles.
+- Extracted skills.
+- Skill gaps.
+- Suggested interview types.
+- Suggested difficulty.
+- First recommended interview button.
+
+
+9. INTERVIEW EXPERIENCE
+-----------------------
+
+Connect the current interview room to backend APIs:
+
+- Create an interview record before starting.
+- Fetch generated questions from Gemini.
+- Save answers after each submission.
+- Autosave drafts.
+- Resume an unfinished interview.
+- Submit transcript data.
+- Request follow-up questions.
+- Finish the interview on the backend.
+- Generate final report asynchronously.
+- Handle refresh and reconnect safely.
+
+Interview states:
+
+- draft
+- ready
+- in_progress
+- paused
+- submitted
+- evaluating
+- completed
+- failed
+- abandoned
+
+Voice features:
+
+- Request microphone permission only when needed.
+- Use Web Speech API where supported.
+- Show browser compatibility message.
+- Provide typing fallback.
+- Store transcript with user consent.
+- Allow transcript editing before submission.
+- Do not upload audio unless explicitly required.
+
+
+10. ANSWER EVALUATION
+---------------------
+
+For each submitted answer:
+
+- Send question, answer, and relevant profile context to backend.
+- Evaluate technical correctness.
+- Evaluate relevance.
+- Evaluate communication.
+- Evaluate confidence indicators.
+- Generate score.
+- Generate concise feedback.
+- Generate improved answer guidance.
+- Generate follow-up question when appropriate.
+
+Do not expose the Gemini API key in frontend JavaScript.
+
+Show evaluation states:
+
+- Answer saved.
+- Evaluation in progress.
+- Evaluation complete.
+- Evaluation unavailable.
+
+
+11. REPORTS AND ANALYTICS
+-------------------------
+
+Populate the report page from Supabase:
+
+- Overall score.
+- Skill score breakdown.
+- Question-by-question evaluation.
+- Strengths.
+- Areas to improve.
+- Recommended topics.
+- Suggested learning plan.
+- Interview metadata.
+
+Add charts:
+
+- Score over time.
+- Communication trend.
+- Technical skill trend.
+- Confidence trend.
+- Scores by role.
+
+Add actions:
+
+- Download PDF.
+- Print report.
+- Share expiring report link.
+- Email report.
+- Retry weak questions.
+
+
+12. DASHBOARD AND MY INTERVIEWS
+------------------------------
+
+Dashboard:
+
+- Fetch all metrics from backend.
+- Show true zero-data state for new users.
+- Refresh after interview completion.
+- Show latest recommendation.
+- Show daily challenge.
+- Show weekly goal.
+- Show streak.
+- Show notification summary.
+
+My Interviews:
+
+- Load paginated interview history.
+- Search by role.
+- Filter by status.
+- Filter by interview type.
+- Filter by score.
+- Sort by date or score.
+- Open report.
+- Retry session.
+- Resume unfinished session.
+- Delete session with confirmation.
+- Export history.
+
+
+13. PRACTICE GOALS AND ENGAGEMENT
+---------------------------------
+
+Implement:
+
+- Weekly interview target.
+- Daily practice target.
+- Topic mastery goals.
+- Progress tracking.
+- Streak calculation.
+- Daily question.
+- Daily challenge.
+- Achievement badges.
+- Weekly email summary.
+- Optional leaderboard.
+
+Make leaderboard participation opt-in.
+
+
+14. JOB DESCRIPTION ANALYSIS
+----------------------------
+
+Add a job description page:
+
+- Paste job description.
+- Upload job description file.
+- Extract requirements.
+- Match against AI profile.
+- Show matching skills.
+- Show missing skills.
+- Generate interview questions.
+- Create preparation checklist.
+- Save job description for later.
+
+Suggested file:
+
+- frontend/job-analysis.html
+
+
+15. PROFILE AND SETTINGS
+------------------------
+
+Connect profile page to Supabase:
+
+- Load real user profile.
+- Save profile changes.
+- Change avatar.
+- Update target roles.
+- Update skills.
+- Manage resume.
+- Re-run AI analysis.
+- Change password through Firebase.
+- Link Google provider.
+- Link phone provider.
+- Manage notifications.
+- Manage theme.
+- Export user data.
+- Delete account and associated data.
+
+
+16. SECURITY AND PRIVACY
+------------------------
+
+- Keep Gemini API key backend-only.
+- Keep Supabase service role key backend-only.
+- Verify Firebase tokens on every protected backend route.
+- Enable Supabase Row Level Security.
+- Validate all request bodies.
+- Validate uploaded files.
+- Rate-limit login and AI endpoints.
+- Rate-limit OTP-related operations through Firebase controls.
+- Never log passwords, tokens, OTPs, or raw resume text.
+- Use secure HTTP headers.
+- Configure strict CORS.
+- Use HTTPS in production.
+- Use signed, expiring file URLs.
+- Provide data deletion.
+- Provide consent history.
+- Provide privacy policy.
+- Provide terms of service.
+- Provide retention policy.
+
+
+17. TESTING PLAN
+----------------
+
+Frontend tests:
+
+- Registration validation.
+- Manual profile path.
+- Resume upload validation.
+- Login redirects.
+- Navigation.
+- Interview setup.
+- Interview timer.
+- Question navigation.
+- Answer submission.
+- Report empty state.
+- Report completed state.
+- Responsive layouts.
+- Reduced-motion mode.
+
+Backend tests:
+
+- Firebase token verification.
+- Unauthorized requests.
+- User ownership checks.
+- Supabase database operations.
+- Resume upload restrictions.
+- Resume extraction.
+- Gemini success response.
+- Gemini timeout.
+- Gemini rate limit.
+- Invalid Gemini JSON.
+- Interview creation.
+- Answer saving.
+- Report creation.
+
+End-to-end tests:
+
+1. Register with Google.
+2. Register with phone OTP.
+3. Complete manual profile.
+4. Upload a resume.
+5. Wait for AI profile analysis.
+6. Start an interview.
+7. Answer questions.
+8. Complete the interview.
+9. View report.
+10. Return to dashboard.
+11. Verify metrics update.
+
+
+18. DEPLOYMENT
+-------------
+
+Local development:
+
+- Use separate frontend and backend environment files.
+- Use Firebase emulator where useful.
+- Use Supabase development project.
+- Use Gemini development API key.
+
+Production:
+
+- Deploy frontend to Firebase Hosting, Vercel, or Netlify.
+- Deploy backend to Render, Railway, Fly.io, or a managed Node platform.
+- Configure production Firebase authorized domains.
+- Configure production Supabase URL and policies.
+- Configure backend secrets.
+- Enable HTTPS.
+- Add health monitoring.
+- Add error tracking.
+- Configure database backups.
+- Configure file retention.
+- Configure rate limits.
+
+
+19. PRIORITY ORDER
+------------------
+
+Priority 1:
+
+- Supabase project.
+- Firebase project.
+- Backend server.
+- Firebase token verification.
+- User profile table.
+- Login and registration API integration.
+
+Priority 2:
+
+- Resume Storage bucket.
+- Resume extraction.
+- Manual profile persistence.
+- Gemini resume analysis.
+- Profile analysis result page.
+
+Priority 3:
+
+- Interview tables.
+- Gemini question generation.
+- Backend interview routes.
+- Backend answer saving.
+- Real interview room data.
+
+Priority 4:
+
+- Gemini answer evaluation.
+- Report persistence.
+- Dynamic dashboard metrics.
+- Report charts.
+- PDF export.
+
+Priority 5:
+
+- Phone SMS OTP.
+- Google authentication polish.
+- Job description analysis.
+- Practice goals.
+- Daily challenge.
+- Bookmarks.
+- Achievements.
+
+Priority 6:
+
+- Voice analytics.
+- Follow-up questions.
+- Interview comparison.
+- Notifications.
+- Dark mode.
+- Shareable reports.
+- Account export and deletion.
+
+
+20. IMMEDIATE NEXT TASKS
+------------------------
+
+1. Create Firebase project and enable Google and Phone providers.
+2. Create Supabase project and configure database/storage.
+3. Create the Java 17+ Spring Boot Maven/Gradle backend.
+4. Add Java backend dependencies and configuration profiles.
+5. Create secure environment variables.
+6. Implement Firebase Admin Java token middleware.
+7. Create Supabase schema and Row Level Security policies.
+8. Connect registration to Firebase Auth.
+9. Connect Google login.
+10. Connect phone SMS OTP login.
+11. Persist the profile in Supabase.
+12. Implement secure resume upload in Spring Boot.
+13. Add PDF and DOCX text extraction in Java.
+14. Connect Gemini resume analysis through a Java service.
+15. Add profile analysis result page.
+16. Implement the profile practice activity heat map and activity API.
+17. Replace local interview questions with backend-generated questions.
+18. Persist interview answers.
+19. Add Gemini answer evaluation.
+20. Persist and render reports.
+21. Replace dashboard mock values with database metrics.
+22. Add JUnit, Mockito, integration, and end-to-end tests.
+23. Add production tests and deployment configuration.
+
+
+IMPORTANT IMPLEMENTATION NOTE
+-----------------------------
+
+Firebase should be used for authentication only.
+
+Supabase should be used for application data, interview records, reports,
+profiles, goals, bookmarks, notifications, and private resume storage.
+
+Gemini API calls must be made by the Java Spring Boot backend only. Never place
+GEMINI_API_KEY in frontend files, localStorage, HTML, or public configuration.
+
+The final deliverable must remain Java full stack: Spring Boot is the only
+production backend, Firebase is used for authentication, and Supabase is used
+for application data and storage. Node.js must not be introduced as a backend
+replacement.

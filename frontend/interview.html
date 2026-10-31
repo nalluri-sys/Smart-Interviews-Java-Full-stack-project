@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>New Interview | Smart Interview Coach</title>
+  <meta name="description" content="Configure and start a new AI-powered mock interview session.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app-shell" id="appShell" style="display:none">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" role="navigation" aria-label="Primary navigation">
+    <div class="brand"><span class="brand-mark">🎙</span><div><strong>Smart Interview</strong><small>COACH</small></div></div>
+    <div class="side-title">Workspace</div>
+    <nav class="nav">
+      <a href="dashboard.html"><span class="nav-icon">▦</span>Dashboard</a>
+      <a href="interview.html" class="active"><span class="nav-icon">◉</span>New Interview</a>
+      <a href="my-interviews.html"><span class="nav-icon">▤</span>My Interviews</a>
+      <a href="report.html"><span class="nav-icon">▥</span>Reports</a>
+      <a href="profile.html"><span class="nav-icon">♙</span>Profile</a>
+    </nav>
+    <div class="side-bottom">
+      <a href="#" id="logoutBtn"><span class="nav-icon">↪</span>Logout</a>
+    </div>
+  </aside>
+
+  <main class="main" role="main">
+    <header class="topbar">
+      <div><h1>Configure Interview</h1><p class="eyebrow">Set up your personalized AI mock interview session</p></div>
+      <div class="user-menu"><div class="avatar" id="userAvatar">?</div></div>
+    </header>
+
+    <div class="setup">
+      <form id="setupForm" class="card setup-card" novalidate>
+
+        <!-- Error Banner -->
+        <div id="setupError" role="alert" style="display:none;background:#fef0f2;border:1px solid #f9d0d5;border-radius:6px;padding:12px 16px;color:#b91c1c;font-size:12px;margin-bottom:16px"></div>
+
+        <div class="grid setup-grid">
+          <!-- Role -->
+          <label class="field wide" for="setupRole">
+            Target Role *
+            <input type="text" id="setupRole" name="role" placeholder="e.g. Software Engineer, Data Scientist, Product Manager" required>
+          </label>
+
+          <!-- Interview Type -->
+          <div class="field wide">
+            <span style="font-size:9px;color:#52627e;font-weight:600">Interview Type</span>
+            <div class="choice-row" role="group" aria-label="Interview type" style="margin-top:6px">
+              <button type="button" class="choice selected" data-type="Technical" id="typeBtn-Technical">💻 Technical</button>
+              <button type="button" class="choice" data-type="Behavioral" id="typeBtn-Behavioral">🧠 Behavioral</button>
+              <button type="button" class="choice" data-type="HR" id="typeBtn-HR">👔 HR</button>
+              <button type="button" class="choice" data-type="Case Study" id="typeBtn-Case">📋 Case Study</button>
+            </div>
+          </div>
+
+          <!-- Difficulty -->
+          <div class="field">
+            <span style="font-size:9px;color:#52627e;font-weight:600">Difficulty Level</span>
+            <div class="choice-row" role="group" aria-label="Difficulty level" style="margin-top:6px">
+              <button type="button" class="choice" data-diff="Beginner" id="diffBtn-Beginner">🌱 Beginner</button>
+              <button type="button" class="choice selected" data-diff="Intermediate" id="diffBtn-Intermediate">⚡ Intermediate</button>
+              <button type="button" class="choice" data-diff="Advanced" id="diffBtn-Advanced">🔥 Advanced</button>
+              <button type="button" class="choice" data-diff="Expert" id="diffBtn-Expert">💎 Expert</button>
+            </div>
+          </div>
+
+          <!-- Company -->
+          <label class="field" for="targetCompany">
+            Target Company (optional)
+            <select id="targetCompany" name="company">
+              <option value="">General / Any company</option>
+              <option>Google</option>
+              <option>Amazon</option>
+              <option>Microsoft</option>
+              <option>Meta</option>
+              <option>Apple</option>
+              <option>Netflix</option>
+              <option>Uber</option>
+              <option>Airbnb</option>
+              <option>Flipkart</option>
+              <option>Infosys</option>
+              <option>TCS</option>
+              <option>Wipro</option>
+              <option>Accenture</option>
+              <option>Startup / Other</option>
+            </select>
+          </label>
+
+          <!-- Question Count -->
+          <label class="field" for="questionCount">
+            Number of Questions
+            <select id="questionCount" name="questionCount">
+              <option value="5">5 questions (~15 min)</option>
+              <option value="8" selected>8 questions (~25 min)</option>
+              <option value="10">10 questions (~30 min)</option>
+              <option value="15">15 questions (~45 min)</option>
+            </select>
+          </label>
+
+          <!-- Language -->
+          <label class="field" for="interviewLang">
+            Language
+            <select id="interviewLang" name="language">
+              <option value="English" selected>English</option>
+              <option value="Hindi">Hindi</option>
+            </select>
+          </label>
+
+          <!-- Tips -->
+          <div class="card tip wide" style="margin-top:4px">
+            <strong>💡 AI Tip:</strong> Your profile skills and resume will be used to generate relevant, personalized questions.
+            The AI interviewer will ask follow-up questions based on your answers for a realistic experience.
+          </div>
+        </div>
+
+        <div class="setup-actions">
+          <button type="submit" class="btn" id="startBtn" style="min-width:180px;padding:12px 24px;font-size:13px">
+            ▶ Generate &amp; Start Interview
+          </button>
+        </div>
+      </form>
+    </div>
+  </main>
+</div>
+
+<!-- Loading overlay for question generation -->
+<div id="generatingOverlay" style="display:none;position:fixed;inset:0;background:rgba(6,13,31,.92);z-index:9999;display:none;place-items:center">
+  <div style="text-align:center;color:#fff;max-width:360px;padding:40px">
+    <div style="font-size:50px;margin-bottom:20px;animation:spin 2s linear infinite">⚙️</div>
+    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+    <h2 style="margin:0 0 10px;font-size:20px">Generating Your Questions</h2>
+    <p style="color:#567099;font-size:14px;line-height:1.6">Our AI is creating personalized questions based on your profile and interview configuration. This takes 5–15 seconds.</p>
+  </div>
+</div>
+
+<div id="loadingOverlay" style="position:fixed;inset:0;background:#060d1f;display:grid;place-items:center;z-index:8999">
+  <div style="text-align:center;color:#fff">
+    <div style="font-size:40px">🎙</div>
+    <div style="color:#567099;font-size:13px;margin-top:8px">Loading…</div>
+  </div>
+</div>
+
+<script type="module">
+  import { auth, signOut, onAuthStateChanged } from './js/supabase-config.js';
+  import { createInterview, getProfile } from './js/api.js';
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    document.getElementById('loadingOverlay').style.display = 'none';
+    document.getElementById('appShell').style.display = 'flex';
+
+    const name = user.displayName || user.email?.split('@')[0] || 'U';
+    document.getElementById('userAvatar').textContent = name[0].toUpperCase();
+
+    // Pre-fill role from profile
+    try {
+      const profile = await getProfile();
+      if (profile?.target_role) {
+        document.getElementById('setupRole').value = profile.target_role;
+      }
+    } catch (e) { /* ignore */ }
+  });
+
+  // Type selection
+  let selectedType = 'Technical';
+  let selectedDiff = 'Intermediate';
+
+  document.querySelectorAll('.choice[data-type]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedType = btn.dataset.type;
+      document.querySelectorAll('.choice[data-type]').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    });
+  });
+
+  document.querySelectorAll('.choice[data-diff]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedDiff = btn.dataset.diff;
+      document.querySelectorAll('.choice[data-diff]').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    });
+  });
+
+  // Form submit
+  document.getElementById('setupForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const role = document.getElementById('setupRole').value.trim();
+    if (!role) {
+      const err = document.getElementById('setupError');
+      err.textContent = 'Please enter a target role to continue.';
+      err.style.display = 'block';
+      return;
+    }
+
+    document.getElementById('setupError').style.display = 'none';
+    document.getElementById('startBtn').disabled = true;
+
+    const overlay = document.getElementById('generatingOverlay');
+    overlay.style.display = 'grid';
+
+    try {
+      const config = {
+        role,
+        interviewType: selectedType,
+        difficulty: selectedDiff,
+        questionCount: parseInt(document.getElementById('questionCount').value),
+        language: document.getElementById('interviewLang').value,
+        company: document.getElementById('targetCompany').value || null
+      };
+
+      const result = await createInterview(config);
+
+      if (result?.interview?.id) {
+        window.location.href = `interview-room.html?id=${result.interview.id}`;
+      } else {
+        throw new Error('Interview creation failed — no ID returned.');
+      }
+    } catch (err) {
+      overlay.style.display = 'none';
+      document.getElementById('startBtn').disabled = false;
+      const errEl = document.getElementById('setupError');
+      errEl.textContent = err.message || 'Failed to create interview. Please ensure the backend is running.';
+      errEl.style.display = 'block';
+    }
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+    e.preventDefault();
+    await signOut(auth);
+    window.location.href = 'login.html';
+  });
+</script>
+</body>
+</html>

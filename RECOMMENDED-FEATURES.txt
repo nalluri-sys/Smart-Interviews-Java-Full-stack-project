@@ -1,0 +1,536 @@
+SMART INTERVIEW COACH
+RECOMMENDED FEATURES
+=====================
+
+This file contains the recommended product features and implementation plan
+for Smart Interview Coach.
+
+
+1. CORE INTERVIEW FEATURES
+--------------------------
+
+- Dedicated interview room page.
+- Live interview question display.
+- Countdown timer.
+- Start, pause, resume, and end interview controls.
+- Voice recording.
+- Speech-to-text transcript.
+- Repeat question button.
+- Skip question button.
+- Submit answer button.
+- Interview progress indicator.
+- Question counter.
+- Dynamic follow-up questions.
+- Technical, behavioral, HR, managerial, and system design interview modes.
+- Rapid-fire interview mode.
+- Mock phone-screen mode.
+
+
+2. REGISTRATION AND PERSONALIZED ONBOARDING
+-------------------------------------------
+
+- Collect full name, email, password, and confirmation password.
+- Allow the user to upload a resume.
+- Support PDF, DOC, DOCX, and TXT resume formats.
+- Validate resume size before upload.
+- Allow users without a resume to enter their details manually.
+- Manual profile fields:
+  - Target role.
+  - Experience level.
+  - Skills and technologies.
+  - Career goals.
+- Ask for user consent before analyzing profile information.
+- Extract resume text securely on the backend.
+- Use AI to analyze:
+  - Candidate name.
+  - Current role.
+  - Previous roles.
+  - Years of experience.
+  - Technical skills.
+  - Soft skills.
+  - Projects.
+  - Education.
+  - Certifications.
+  - Recommended job roles.
+  - Skill gaps.
+  - Suggested interview difficulty.
+- Generate an AI profile summary.
+- Generate personalized interview topics.
+- Generate recommended preparation steps.
+- Store profile analysis status:
+  - pending-ai-analysis
+  - processing
+  - completed
+  - failed
+- Never expose AI API keys in frontend code.
+- Process resumes on the backend.
+- Delete uploaded resume data when the user requests deletion.
+
+
+3. AUTHENTICATION AND ACCOUNT SECURITY
+--------------------------------------
+
+- Backend registration.
+- Backend login.
+- Password hashing with bcrypt.
+- JWT or secure session authentication.
+- Protected dashboard and interview routes.
+- Logout and token removal.
+- Forgot password flow.
+- Password reset by email.
+- Email verification.
+- Password strength validation.
+- Login attempt protection.
+- Session expiration.
+- Account deletion.
+- User data export.
+
+
+4. AI QUESTION GENERATION
+-------------------------
+
+Generate questions using:
+
+- User profile.
+- Resume analysis.
+- Target role.
+- Experience level.
+- Difficulty level.
+- Interview type.
+- Selected technologies.
+- Job description.
+- Number of questions.
+- Previous weak areas.
+
+Question types:
+
+- Technical questions.
+- Coding questions.
+- SQL questions.
+- Behavioral questions.
+- Situational questions.
+- Communication questions.
+- Project-based questions.
+- Resume-based questions.
+- Company-specific questions.
+- System design questions.
+
+
+5. AI ANSWER EVALUATION
+-----------------------
+
+Evaluate each answer using:
+
+- Technical correctness.
+- Relevance.
+- Completeness.
+- Communication clarity.
+- Confidence.
+- Structure.
+- Problem-solving.
+- Depth of explanation.
+- Use of examples.
+- Time taken.
+- Filler words.
+
+Return:
+
+- Question score.
+- Overall score.
+- Strengths.
+- Weaknesses.
+- Suggested improved answer.
+- Follow-up question.
+- Recommended learning topics.
+- Confidence feedback.
+- Communication feedback.
+
+
+6. RESUME AND JOB DESCRIPTION FEATURES
+---------------------------------------
+
+- Resume upload and parsing.
+- Resume profile generation.
+- Resume skill extraction.
+- Resume project extraction.
+- Resume gap detection.
+- Paste or upload a job description.
+- Analyze job description requirements.
+- Match resume skills against job requirements.
+- Show missing skills.
+- Generate interview questions from the job description.
+- Create a personalized preparation checklist.
+- Recommend interview difficulty based on the job description.
+
+
+7. DASHBOARD FEATURES
+---------------------
+
+- Total interviews.
+- Average score.
+- Best score.
+- Improvement percentage.
+- Practice time.
+- Current practice streak.
+- Weekly practice goal.
+- Recent interviews.
+- Performance by skill.
+- Recommended next interview.
+- Question of the day.
+- Daily challenge.
+- Progress chart.
+- Upcoming reminders.
+- Personalized preparation plan.
+- Empty state for new users.
+
+
+8. MY INTERVIEWS FEATURES
+-------------------------
+
+- View all interview sessions.
+- Search by role.
+- Filter by interview type.
+- Filter by score.
+- Filter by date.
+- Filter by status.
+- Sort by newest.
+- Sort by highest score.
+- View interview report.
+- Retry an interview.
+- Continue an unfinished interview.
+- Delete an interview.
+- Export interview history.
+- Compare two interviews.
+- Add notes to an interview.
+- Bookmark difficult questions.
+
+
+9. REPORTING AND ANALYTICS
+--------------------------
+
+- Overall interview score.
+- Score breakdown.
+- Technical skill score.
+- Communication score.
+- Confidence score.
+- Relevance score.
+- Problem-solving score.
+- Answer-by-answer review.
+- Strengths and improvement areas.
+- Score over time.
+- Skill improvement chart.
+- Average score by role.
+- Strongest topics.
+- Weakest topics.
+- Personalized learning plan.
+- Recommended resources.
+- Printable report.
+- PDF export.
+- Shareable report link.
+- Email report.
+
+
+10. PRACTICE AND LEARNING FEATURES
+----------------------------------
+
+- Daily question.
+- Daily challenge.
+- Practice goals.
+- Weekly targets.
+- Study reminders.
+- Topic-based practice.
+- Weak-area practice.
+- Saved questions.
+- Bookmarked questions.
+- Personal notes.
+- Custom interview sessions.
+- Learning roadmap.
+- Recommended resources.
+- Skill mastery tracking.
+
+
+11. VOICE AND COMMUNICATION FEATURES
+------------------------------------
+
+- Browser microphone permission flow.
+- Voice recording.
+- Speech-to-text.
+- Speaking speed analysis.
+- Pause analysis.
+- Filler word detection.
+- Voice clarity analysis.
+- Answer duration.
+- Confidence indicators.
+- Optional camera analysis.
+- Optional eye-contact analysis.
+- Optional posture analysis.
+- Clear privacy consent before camera or microphone access.
+- Allow users to disable voice and camera analysis.
+
+
+12. PROFILE AND SETTINGS
+------------------------
+
+- Edit personal information.
+- Change profile photo.
+- Change password.
+- Manage email notifications.
+- Manage interview reminders.
+- Select preferred language.
+- Select preferred interview style.
+- Select target roles.
+- Manage resume.
+- View AI-generated profile.
+- Re-run resume analysis.
+- Delete resume.
+- Export personal data.
+- Delete account.
+- Light mode.
+- Dark mode.
+- System theme mode.
+
+
+13. ENGAGEMENT FEATURES
+-----------------------
+
+- Achievement badges.
+- First interview badge.
+- Five interviews completed badge.
+- Seven-day streak badge.
+- Score above 80 percent badge.
+- Communication master badge.
+- SQL specialist badge.
+- Consistent learner badge.
+- Practice streaks.
+- Weekly progress summaries.
+- Optional leaderboard.
+- Optional public profile.
+- Shareable achievements.
+
+
+14. NOTIFICATIONS
+-----------------
+
+- Daily practice reminders.
+- Weekly performance summary.
+- New AI feedback notification.
+- Streak expiration reminder.
+- New recommended questions.
+- Resume analysis completion notification.
+- Interview completion notification.
+- Password and security notifications.
+
+
+15. ACCESSIBILITY AND UX
+------------------------
+
+- Responsive desktop, tablet, and mobile layouts.
+- Keyboard navigation.
+- Visible focus states.
+- Proper form labels.
+- ARIA labels where required.
+- Screen-reader friendly status messages.
+- Reduced-motion support.
+- Loading states.
+- Empty states.
+- Error states.
+- Success messages.
+- Confirmation dialogs for destructive actions.
+- Smooth transitions without blocking user actions.
+- Clear validation messages.
+
+
+16. DATA MODEL SUGGESTION
+-------------------------
+
+User:
+
+- name
+- email
+- passwordHash
+- profileSource
+- resumeName
+- resumeStoragePath
+- resumeText
+- aiProfile
+- targetRole
+- experienceLevel
+- skills
+- careerGoals
+- preferences
+- notificationSettings
+- createdAt
+- updatedAt
+
+Interview:
+
+- userId
+- role
+- interviewType
+- difficulty
+- duration
+- language
+- questions
+- answers
+- transcripts
+- scores
+- overallScore
+- feedback
+- recommendations
+- status
+- startedAt
+- completedAt
+
+Question:
+
+- interviewId
+- text
+- category
+- difficulty
+- expectedTopics
+- userAnswer
+- transcript
+- score
+- feedback
+- followUpQuestion
+
+
+17. API ENDPOINT SUGGESTION
+---------------------------
+
+Authentication:
+
+- POST /api/auth/register
+- POST /api/auth/login
+- POST /api/auth/logout
+- POST /api/auth/forgot-password
+- POST /api/auth/reset-password
+- GET /api/auth/me
+
+Profile:
+
+- GET /api/profile
+- PUT /api/profile
+- POST /api/profile/resume
+- POST /api/profile/analyze-resume
+- GET /api/profile/analysis
+- DELETE /api/profile/resume
+
+Interviews:
+
+- POST /api/interviews
+- GET /api/interviews
+- GET /api/interviews/:id
+- PUT /api/interviews/:id
+- DELETE /api/interviews/:id
+- POST /api/interviews/:id/start
+- POST /api/interviews/:id/answer
+- POST /api/interviews/:id/finish
+- POST /api/interviews/:id/retry
+
+Reports:
+
+- GET /api/reports/:interviewId
+- GET /api/reports
+- GET /api/reports/:interviewId/pdf
+- GET /api/reports/:interviewId/share
+
+AI:
+
+- POST /api/ai/generate-questions
+- POST /api/ai/evaluate-answer
+- POST /api/ai/analyze-resume
+- POST /api/ai/analyze-job-description
+- POST /api/ai/generate-learning-plan
+
+
+18. IMPLEMENTATION PHASES
+-------------------------
+
+Phase 1 - Foundation:
+
+- Configure MongoDB.
+- Create User model.
+- Create Interview model.
+- Build secure authentication.
+- Protect private routes.
+- Connect frontend forms to backend APIs.
+- Persist user profiles.
+
+Phase 2 - Personalized onboarding:
+
+- Add resume storage.
+- Add resume text extraction.
+- Add manual profile fallback.
+- Add Gemini resume analysis.
+- Save generated AI profile.
+- Generate role and skill suggestions.
+
+Phase 3 - Interview experience:
+
+- Build interview room.
+- Generate questions using profile data.
+- Add timer and progress.
+- Add answer submission.
+- Add voice recording and transcript.
+- Save interview session data.
+
+Phase 4 - Evaluation and reporting:
+
+- Evaluate answers with Gemini.
+- Generate score breakdown.
+- Generate improvement feedback.
+- Build report page.
+- Add charts and PDF export.
+
+Phase 5 - Engagement:
+
+- Add goals and streaks.
+- Add daily question.
+- Add bookmarks and notes.
+- Add badges.
+- Add reminders.
+
+Phase 6 - Advanced features:
+
+- Resume-job matching.
+- Follow-up questions.
+- Interview comparison.
+- Voice analytics.
+- Camera analysis with consent.
+- Dark mode.
+- Shareable reports.
+
+
+19. SECURITY REQUIREMENTS
+-------------------------
+
+- Keep Gemini and database credentials in backend environment variables.
+- Never store raw passwords.
+- Validate all uploaded files.
+- Limit resume file size.
+- Validate MIME type and extension.
+- Scan uploaded files before processing.
+- Sanitize extracted resume text.
+- Rate-limit authentication and AI endpoints.
+- Authorize every user-owned resource.
+- Avoid exposing private resume data in public links.
+- Use secure cookies or short-lived access tokens.
+- Log security events without logging sensitive resume content.
+- Provide account and data deletion controls.
+
+
+20. RECOMMENDED NEXT STEPS
+--------------------------
+
+1. Implement backend registration and login.
+2. Add the User schema fields listed above.
+3. Add secure resume upload storage.
+4. Add PDF and DOCX text extraction.
+5. Connect Gemini resume analysis.
+6. Save the generated AI profile.
+7. Build the interview room.
+8. Generate role-specific interview questions.
+9. Evaluate submitted answers.
+10. Populate the dashboard with real user data.
+

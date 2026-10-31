@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>My Interviews | Smart Interview Coach</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app-shell" id="appShell" style="display:none">
+  <aside class="sidebar" role="navigation">
+    <div class="brand"><span class="brand-mark">🎙</span><div><strong>Smart Interview</strong><small>COACH</small></div></div>
+    <div class="side-title">Workspace</div>
+    <nav class="nav">
+      <a href="dashboard.html"><span class="nav-icon">▦</span>Dashboard</a>
+      <a href="interview.html"><span class="nav-icon">◉</span>New Interview</a>
+      <a href="my-interviews.html" class="active"><span class="nav-icon">▤</span>My Interviews</a>
+      <a href="report.html"><span class="nav-icon">▥</span>Reports</a>
+      <a href="profile.html"><span class="nav-icon">♙</span>Profile</a>
+    </nav>
+    <div class="side-bottom">
+      <a href="#" id="logoutBtn"><span class="nav-icon">↪</span>Logout</a>
+    </div>
+  </aside>
+
+  <main class="main" role="main">
+    <header class="topbar">
+      <div><h1>My Interviews</h1><p class="eyebrow">History of all your practice sessions</p></div>
+      <a class="btn" href="interview.html">＋ New Interview</a>
+    </header>
+
+    <!-- Filters -->
+    <div class="card" style="padding:14px;margin-bottom:15px">
+      <div class="filter-bar">
+        <input type="text" class="search-input" id="searchInput" placeholder="🔍 Search by role…" aria-label="Search interviews">
+        <select id="typeFilter" aria-label="Filter by type">
+          <option value="">All Types</option>
+          <option>Technical</option>
+          <option>Behavioral</option>
+          <option>HR</option>
+          <option>Case Study</option>
+        </select>
+        <select id="statusFilter" aria-label="Filter by status">
+          <option value="">All Statuses</option>
+          <option value="completed">Completed</option>
+          <option value="in_progress">In Progress</option>
+          <option value="paused">Paused</option>
+          <option value="abandoned">Abandoned</option>
+        </select>
+        <select id="sortFilter" aria-label="Sort by">
+          <option value="date-desc">Newest First</option>
+          <option value="date-asc">Oldest First</option>
+          <option value="score-desc">Highest Score</option>
+          <option value="score-asc">Lowest Score</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Interviews Table -->
+    <div class="card">
+      <div id="interviewsTable">
+        <div class="empty">Loading your interviews…</div>
+      </div>
+      <!-- Pagination -->
+      <div id="pagination" style="display:flex;justify-content:center;gap:8px;margin-top:16px;padding-top:12px;border-top:1px solid #edf2f8"></div>
+    </div>
+  </main>
+</div>
+
+<div id="loadingOverlay" style="position:fixed;inset:0;background:#060d1f;display:grid;place-items:center;z-index:9999">
+  <div style="text-align:center;color:#fff"><div style="font-size:40px">🎙</div><div style="color:#567099;margin-top:8px">Loading…</div></div>
+</div>
+
+<script type="module">
+  import { auth, signOut, onAuthStateChanged } from './js/supabase-config.js';
+  import { getInterviews } from './js/api.js';
+
+  let allInterviews = [];
+  let currentPage = 0;
+  const PAGE_SIZE = 10;
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    document.getElementById('loadingOverlay').style.display = 'none';
+    document.getElementById('appShell').style.display = 'flex';
+    await loadInterviews();
+  });
+
+  async function loadInterviews() {
+    try {
+      const data = await getInterviews(0, 100); // Load all for client filtering
+      allInterviews = data || [];
+      renderInterviews();
+    } catch (err) {
+      document.getElementById('interviewsTable').innerHTML =
+        `<div class="empty">Failed to load interviews: ${err.message}</div>`;
+    }
+  }
+
+  function getFilteredInterviews() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const type = document.getElementById('typeFilter').value;
+    const status = document.getElementById('statusFilter').value;
+    const sort = document.getElementById('sortFilter').value;
+
+    let filtered = allInterviews.filter(iv => {
+      if (search && !iv.role?.toLowerCase().includes(search)) return false;
+      if (type && iv.interview_type !== type) return false;
+      if (status && iv.status !== status) return false;
+      return true;
+    });
+
+    filtered.sort((a, b) => {
+      if (sort === 'date-asc') return new Date(a.created_at) - new Date(b.created_at);
+      if (sort === 'score-desc') return (b.overall_score || 0) - (a.overall_score || 0);
+      if (sort === 'score-asc') return (a.overall_score || 0) - (b.overall_score || 0);
+      return new Date(b.created_at) - new Date(a.created_at);
+    });
+
+    return filtered;
+  }
+
+  function renderInterviews() {
+    const filtered = getFilteredInterviews();
+    const start = currentPage * PAGE_SIZE;
+    const paged = filtered.slice(start, start + PAGE_SIZE);
+
+    const table = document.getElementById('interviewsTable');
+
+    if (!filtered.length) {
+      table.innerHTML = `<div class="empty">No interviews match your filters.<br>
+        <a class="btn ghost" href="interview.html" style="margin-top:12px;display:inline-block">Start an Interview</a></div>`;
+      document.getElementById('pagination').innerHTML = '';
+      return;
+    }
+
+    const statusColors = {
+      completed: { bg: '#e4f8f0', color: '#13a87c' },
+      in_progress: { bg: '#fff5e0', color: '#a06000' },
+      paused: { bg: '#eef3ff', color: '#4059d1' },
+      abandoned: { bg: '#fff0f0', color: '#c0392b' },
+    };
+
+    table.innerHTML = `
+      <table class="table" role="grid">
+        <thead><tr>
+          <th>Role</th><th>Type</th><th>Difficulty</th><th>Score</th><th>Status</th><th>Date</th><th>Actions</th>
+        </tr></thead>
+        <tbody>
+          ${paged.map(iv => {
+            const sc = statusColors[iv.status] || { bg: '#edf2f8', color: '#71809f' };
+            const score = iv.overall_score != null ? Math.round(iv.overall_score) + '%' : '—';
+            const date = new Date(iv.created_at).toLocaleDateString('en-IN');
+            return `<tr>
+              <td><strong>${iv.role || '—'}</strong></td>
+              <td>${iv.interview_type || '—'}</td>
+              <td>${iv.difficulty || '—'}</td>
+              <td><strong style="color:${iv.overall_score >= 70 ? '#13a87c' : iv.overall_score >= 50 ? '#f3a326' : '#ee5670'}">${score}</strong></td>
+              <td><span class="status" style="background:${sc.bg};color:${sc.color}">${iv.status}</span></td>
+              <td>${date}</td>
+              <td class="table-actions">
+                ${iv.status === 'completed'
+                  ? `<a class="btn ghost" href="report.html?id=${iv.id}" style="font-size:9px;padding:4px 9px">📊 Report</a>`
+                  : `<a class="btn ghost" href="interview-room.html?id=${iv.id}" style="font-size:9px;padding:4px 9px">▶ Resume</a>`
+                }
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
+
+    // Pagination
+    const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+    const pag = document.getElementById('pagination');
+    pag.innerHTML = '';
+    for (let i = 0; i < totalPages; i++) {
+      const btn = document.createElement('button');
+      btn.className = `btn ${i === currentPage ? '' : 'ghost'}`;
+      btn.style.cssText = 'font-size:10px;padding:5px 12px';
+      btn.textContent = i + 1;
+      btn.setAttribute('aria-label', `Page ${i + 1}`);
+      btn.addEventListener('click', () => { currentPage = i; renderInterviews(); });
+      pag.appendChild(btn);
+    }
+  }
+
+  // Filter listeners
+  ['searchInput', 'typeFilter', 'statusFilter', 'sortFilter'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      currentPage = 0;
+      renderInterviews();
+    });
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+    e.preventDefault();
+    await signOut(auth);
+    window.location.href = 'login.html';
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Sign In | Smart Interview Coach</title>
+  <meta name="description" content="Sign in to Smart Interview Coach and continue your AI-powered interview practice.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main class="auth-page" role="main">
+  <div class="auth-wrap" id="loginWrap">
+    <!-- Left Brand Panel -->
+    <div class="auth-brand">
+      <div class="brand" style="justify-content:center">
+        <span class="brand-mark">🎙</span>
+        <div>
+          <strong>Smart Interview Coach</strong>
+          <small>AI-powered practice</small>
+        </div>
+      </div>
+      <div class="mic">🎤</div>
+      <h2>Welcome back!</h2>
+      <p>Continue your journey to interview mastery. Your AI coach is ready.</p>
+      <div class="auth-benefits">
+        <div>✅ AI-generated personalized questions</div>
+        <div>✅ Instant answer scoring & feedback</div>
+        <div>✅ Speech-to-text live transcription</div>
+        <div>✅ Detailed progress analytics</div>
+      </div>
+    </div>
+
+    <!-- Right Form Panel -->
+    <div class="auth-form">
+      <h1>Sign in to your account</h1>
+      <p id="registerSuccessMsg" style="display:none;color:#13a87c;font-size:11px;background:#e8faf4;padding:10px 14px;border-radius:6px;margin-bottom:16px">
+        🎉 Account created! Please sign in to continue.
+      </p>
+
+      <!-- Error Banner -->
+      <div id="loginError" role="alert" style="display:none;background:#fef0f2;border:1px solid #f9d0d5;border-radius:6px;padding:10px 14px;color:#b91c1c;font-size:11px;margin-bottom:14px"></div>
+
+      <!-- OAuth Buttons -->
+      <button class="btn full" id="googleSignInBtn" type="button" style="background:white;color:#374151;border:1px solid #d1d5db;margin-bottom:8px;gap:10px">
+        Continue with Google
+      </button>
+      <button class="btn full" id="githubSignInBtn" type="button" style="background:#24292e;color:white;gap:10px;margin-bottom:4px">
+        <span style="font-size:16px">⌥</span> Continue with GitHub
+      </button>
+
+      <div class="or">or sign in with email</div>
+
+      <!-- Email/Password Form -->
+      <form id="loginForm" novalidate>
+        <label class="field" for="loginEmail">
+          Email address
+          <input type="email" id="loginEmail" name="email" placeholder="you@example.com" required autocomplete="email">
+        </label>
+        <label class="field" for="loginPassword">
+          Password
+          <input type="password" id="loginPassword" name="password" placeholder="••••••••" required autocomplete="current-password" minlength="6">
+        </label>
+
+        <div class="form-row">
+          <label style="display:flex;gap:6px;align-items:center;cursor:pointer">
+            <input type="checkbox" id="rememberMe" style="accent-color:#2563eb"> Remember me
+          </label>
+          <a href="forgot-password.html">Forgot password?</a>
+        </div>
+
+        <button class="btn full" type="submit" id="loginSubmitBtn">
+          Sign In
+        </button>
+      </form>
+
+      <a class="auth-link" href="register.html">Don't have an account? <strong>Create one free →</strong></a>
+    </div>
+  </div>
+</main>
+
+<script type="module">
+  import {
+    auth,
+    googleProvider,
+    githubProvider,
+    signInWithPopup,
+    signInWithEmailAndPassword,
+    onAuthStateChanged
+  } from './js/supabase-config.js';
+  import { syncUser } from './js/api.js';
+
+  // Show registration success message
+  const params = new URLSearchParams(location.search);
+  if (params.get('registered') === '1') {
+    document.getElementById('registerSuccessMsg').style.display = 'block';
+  }
+
+  // If already logged in → dashboard
+  onAuthStateChanged(auth, (user) => {
+    if (user) window.location.href = 'dashboard.html';
+  });
+
+  function showError(msg) {
+    const el = document.getElementById('loginError');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function hideError() {
+    document.getElementById('loginError').style.display = 'none';
+  }
+
+  function setLoading(btn, loading) {
+    btn.disabled = loading;
+    btn.textContent = loading ? 'Signing in…' : 'Sign In';
+  }
+
+  // Handle post-login: sync to Supabase then redirect
+  async function handlePostLogin(user) {
+    if (!user) return;
+    try {
+      await syncUser({ email: user.email, full_name: user.displayName });
+    } catch (e) {
+      console.warn('Sync warning:', e.message);
+    }
+    window.location.href = 'dashboard.html';
+  }
+
+  // Email/Password login
+  const loginForm = document.getElementById('loginForm');
+  const loginBtn = document.getElementById('loginSubmitBtn');
+
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!loginForm.reportValidity()) return;
+    hideError();
+    setLoading(loginBtn, true);
+
+    const email = loginForm.email.value.trim();
+    const password = loginForm.password.value;
+
+    try {
+      const { user } = await signInWithEmailAndPassword(auth, email, password);
+      await handlePostLogin(user);
+    } catch (err) {
+      setLoading(loginBtn, false);
+      const msgs = {
+        'auth/user-not-found': 'No account found with this email.',
+        'auth/wrong-password': 'Incorrect password. Please try again.',
+        'auth/too-many-requests': 'Too many failed attempts. Please wait before trying again.',
+        'auth/invalid-credential': 'Invalid email or password.',
+        'auth/user-disabled': 'This account has been disabled.',
+      };
+      showError(msgs[err.code] || err.message);
+    }
+  });
+
+  // Google sign-in
+  document.getElementById('googleSignInBtn').addEventListener('click', async () => {
+    hideError();
+    try {
+      const { user } = await signInWithPopup(auth, googleProvider);
+      await handlePostLogin(user);
+    } catch (err) {
+      if (err.code !== 'auth/popup-closed-by-user') {
+        showError('Google sign-in failed: ' + err.message);
+      }
+    }
+  });
+
+  // GitHub sign-in
+  document.getElementById('githubSignInBtn').addEventListener('click', async () => {
+    hideError();
+    try {
+      const { user } = await signInWithPopup(auth, githubProvider);
+      await handlePostLogin(user);
+    } catch (err) {
+      if (err.code !== 'auth/popup-closed-by-user') {
+        showError('GitHub sign-in failed: ' + err.message);
+      }
+    }
+  });
+</script>
+</body>
+</html>

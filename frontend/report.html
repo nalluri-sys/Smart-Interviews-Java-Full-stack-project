@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Performance Report | Smart Interview Coach</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app-shell" id="appShell" style="display:none">
+  <aside class="sidebar" role="navigation">
+    <div class="brand"><span class="brand-mark">🎙</span><div><strong>Smart Interview</strong><small>COACH</small></div></div>
+    <div class="side-title">Workspace</div>
+    <nav class="nav">
+      <a href="dashboard.html"><span class="nav-icon">▦</span>Dashboard</a>
+      <a href="interview.html"><span class="nav-icon">◉</span>New Interview</a>
+      <a href="my-interviews.html"><span class="nav-icon">▤</span>My Interviews</a>
+      <a href="report.html" class="active"><span class="nav-icon">▥</span>Reports</a>
+      <a href="profile.html"><span class="nav-icon">♙</span>Profile</a>
+    </nav>
+    <div class="side-bottom">
+      <a href="#" id="logoutBtn"><span class="nav-icon">↪</span>Logout</a>
+    </div>
+  </aside>
+
+  <main class="main" role="main">
+    <header class="topbar">
+      <div>
+        <h1>Performance Report</h1>
+        <p class="eyebrow" id="reportSubtitle">Loading your report…</p>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn ghost" id="printBtn" type="button">🖨️ Print</button>
+        <button class="btn ghost" id="shareBtn" type="button">🔗 Share</button>
+      </div>
+    </header>
+
+    <!-- Report not selected yet -->
+    <div id="reportListSection">
+      <div class="card" style="margin-bottom:15px">
+        <div class="card-head"><h2>Your Interview Reports</h2></div>
+        <div id="reportList"><div class="empty">Loading reports…</div></div>
+      </div>
+    </div>
+
+    <!-- Report Detail -->
+    <div id="reportDetail" style="display:none">
+      <!-- Score summary -->
+      <div class="card" style="margin-bottom:15px">
+        <div class="report-top">
+          <div class="score-ring" id="scoreRing">
+            <div>
+              <strong id="overallScore">—</strong>
+              <small>/ 100</small>
+            </div>
+          </div>
+          <div style="flex:1">
+            <h2 id="reportRoleTitle">Interview Report</h2>
+            <p class="eyebrow" id="reportMeta">—</p>
+            <p id="reportSummaryText" style="font-size:11px;color:#52627e;line-height:1.65;max-width:520px;margin:10px 0 0"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Breakdown + Chart -->
+      <div class="grid report-grid">
+        <div class="card">
+          <h2>Score Breakdown</h2>
+          <div id="breakdownBars"></div>
+        </div>
+        <div class="card">
+          <h2>Skill Radar</h2>
+          <canvas id="radarChart" style="max-height:220px"></canvas>
+        </div>
+      </div>
+
+      <!-- Strengths & Improvements -->
+      <div class="grid report-grid" style="margin-top:15px">
+        <div class="callout" id="strengthsList"></div>
+        <div class="callout orange" id="improvementsList"></div>
+      </div>
+
+      <!-- Question by Question -->
+      <div class="card" style="margin-top:15px">
+        <div class="card-head"><h2>Question-by-Question Analysis</h2></div>
+        <div id="questionAnalysis"></div>
+      </div>
+
+      <!-- Recommendations -->
+      <div class="card" style="margin-top:15px">
+        <h2>📚 Learning Plan &amp; Recommendations</h2>
+        <div id="recommendationsList" style="font-size:11px;color:#52627e;line-height:1.7"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="loadingOverlay" style="position:fixed;inset:0;background:#060d1f;display:grid;place-items:center;z-index:9999">
+  <div style="text-align:center;color:#fff"><div style="font-size:40px">🎙</div><div style="color:#567099;margin-top:8px">Loading…</div></div>
+</div>
+
+<script type="module">
+  import { auth, signOut, onAuthStateChanged } from './js/supabase-config.js';
+  import { getAllReports, getReport } from './js/api.js';
+
+  const params = new URLSearchParams(location.search);
+  const targetInterviewId = params.get('id');
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    document.getElementById('loadingOverlay').style.display = 'none';
+    document.getElementById('appShell').style.display = 'flex';
+
+    if (targetInterviewId) {
+      await loadReport(targetInterviewId);
+    } else {
+      await loadReportList();
+    }
+  });
+
+  async function loadReportList() {
+    const list = document.getElementById('reportList');
+    try {
+      const reports = await getAllReports();
+      if (!reports?.length) {
+        list.innerHTML = `<div class="empty">No reports yet. Complete an interview to see your performance.<br>
+          <a class="btn ghost" href="interview.html" style="margin-top:12px;display:inline-block">Start an Interview</a></div>`;
+        return;
+      }
+      list.innerHTML = `<table class="table">
+        <thead><tr><th>Role</th><th>Type</th><th>Score</th><th>Date</th><th></th></tr></thead>
+        <tbody>
+          ${reports.map(r => `
+            <tr>
+              <td><strong>${r.interviewMeta?.role || r.interviews?.role || '—'}</strong></td>
+              <td>${r.interviewMeta?.interview_type || r.interviews?.interview_type || '—'}</td>
+              <td><span style="font-weight:800;color:${(r.overall_score||0)>=70?'#13a87c':'#f3a326'}">${Math.round(r.overall_score || 0)}%</span></td>
+              <td>${new Date(r.created_at).toLocaleDateString('en-IN')}</td>
+              <td><a class="btn ghost" href="report.html?id=${r.interview_id}" style="font-size:9px;padding:4px 10px">View Report</a></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>`;
+    } catch (err) {
+      list.innerHTML = `<div class="empty">Failed to load reports: ${err.message}</div>`;
+    }
+  }
+
+  async function loadReport(interviewId) {
+    document.getElementById('reportListSection').style.display = 'none';
+    document.getElementById('reportDetail').style.display = 'block';
+
+    try {
+      const report = await getReport(interviewId);
+      renderReport(report);
+    } catch (err) {
+      document.getElementById('reportDetail').innerHTML =
+        `<div class="empty">Failed to load report: ${err.message}</div>`;
+    }
+  }
+
+  function renderReport(report) {
+    const meta = report.interviewMeta || {};
+    const data = report.report_data || {};
+
+    document.getElementById('reportSubtitle').textContent =
+      `${meta.role || '—'} · ${meta.interview_type || '—'} · ${meta.difficulty || '—'}`;
+    document.getElementById('reportRoleTitle').textContent =
+      `${meta.role || 'Interview'} Report`;
+    document.getElementById('reportMeta').textContent =
+      `${meta.interview_type || ''} · ${new Date(report.created_at || Date.now()).toLocaleDateString('en-IN', { dateStyle: 'long' })}`;
+
+    const score = Math.round(report.overall_score || 0);
+    document.getElementById('overallScore').textContent = score;
+    const ring = document.getElementById('scoreRing');
+    ring.style.borderColor = score >= 80 ? '#13a87c' : score >= 60 ? '#f3a326' : '#ee5670';
+
+    if (data.summary) {
+      document.getElementById('reportSummaryText').textContent = data.summary;
+    }
+
+    // Breakdown
+    const breakdown = data.breakdown || {};
+    const breakdownEl = document.getElementById('breakdownBars');
+    const dims = {
+      'Technical': breakdown.technical,
+      'Communication': breakdown.communication,
+      'Behavioral': breakdown.behavioral,
+      'Problem Solving': breakdown.problemSolving,
+      'Confidence': breakdown.confidence,
+    };
+    breakdownEl.innerHTML = Object.entries(dims).map(([label, val]) => `
+      <div class="progress-row">
+        <div style="width:100%">
+          <div class="progress-label"><span>${label}</span><span>${Math.round(val || 0)}%</span></div>
+          <div class="bar"><span style="width:${val || 0}%"></span></div>
+        </div>
+      </div>
+    `).join('');
+
+    // Radar chart
+    const ctx = document.getElementById('radarChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'radar',
+      data: {
+        labels: Object.keys(dims),
+        datasets: [{
+          label: 'Score',
+          data: Object.values(dims).map(v => Math.round(v || 0)),
+          backgroundColor: 'rgba(37,99,235,0.15)',
+          borderColor: '#2563eb',
+          borderWidth: 2,
+          pointBackgroundColor: '#2563eb'
+        }]
+      },
+      options: {
+        scales: { r: { min: 0, max: 100, ticks: { display: false } } },
+        plugins: { legend: { display: false } }
+      }
+    });
+
+    // Strengths
+    const strengths = data.strengths || report.strengths || [];
+    document.getElementById('strengthsList').innerHTML =
+      `<h3 style="margin:0 0 10px;color:#22665a">✅ Strengths</h3>
+      ${strengths.map(s => `<p style="margin:4px 0;font-size:11px">• ${s}</p>`).join('')}`;
+
+    // Improvements
+    const improvements = data.improvements || report.improvements || [];
+    document.getElementById('improvementsList').innerHTML =
+      `<h3 style="margin:0 0 10px;color:#975c17">⚠️ Areas to Improve</h3>
+      ${improvements.map(s => `<p style="margin:4px 0;font-size:11px">• ${s}</p>`).join('')}`;
+
+    // Q&A Analysis
+    const questions = report.questions || [];
+    const qaEl = document.getElementById('questionAnalysis');
+    if (questions.length) {
+      qaEl.innerHTML = questions.map((q, i) => `
+        <div style="padding:14px 0;border-top:1px solid #edf2f8">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+            <div style="flex:1">
+              <p style="font-size:11px;font-weight:700;margin:0 0 5px;color:#11244f">Q${i+1}: ${q.question_text}</p>
+              ${q.answer_text ? `<p style="font-size:10px;color:#52627e;margin:0 0 6px"><em>"${q.answer_text.substring(0, 200)}${q.answer_text.length > 200 ? '…' : ''}"</em></p>` : '<p style="font-size:10px;color:#9aabb8;margin:0 0 6px">No answer provided</p>'}
+              ${q.evaluation?.feedback ? `<p style="font-size:10px;color:#374151;margin:0">${q.evaluation.feedback}</p>` : ''}
+            </div>
+            <div style="flex-shrink:0;text-align:center;min-width:52px">
+              <strong style="font-size:18px;color:${(q.score||0)>=70?'#13a87c':(q.score||0)>=50?'#f3a326':'#ee5670'}">${Math.round(q.score||0)}</strong>
+              <p style="font-size:8px;color:#9aabb8;margin:2px 0 0">/100</p>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    } else {
+      qaEl.innerHTML = '<div class="empty" style="padding:20px">No question data available.</div>';
+    }
+
+    // Recommendations
+    const recs = data.recommendations || report.recommendations || [];
+    const learningPlan = data.learningPlan || [];
+    let recHtml = '';
+    if (recs.length) {
+      recHtml += `<h3 style="font-size:12px;margin:0 0 10px">📌 Recommendations</h3>
+        <ul style="padding-left:20px;margin:0 0 16px">${recs.map(r => `<li>${r}</li>`).join('')}</ul>`;
+    }
+    if (learningPlan.length) {
+      recHtml += `<h3 style="font-size:12px;margin:0 0 10px">🎯 Learning Plan</h3>
+        ${learningPlan.map(item => `
+          <div style="padding:10px 12px;border-radius:6px;background:#f8fbff;border:1px solid #dce7f5;margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <strong style="font-size:11px">${item.topic}</strong>
+              <span style="font-size:9px;color:${item.priority==='High'?'#ee5670':item.priority==='Medium'?'#f3a326':'#13a87c'};font-weight:700">${item.priority || ''} Priority</span>
+            </div>
+            ${(item.resources||[]).map(r => `<p style="font-size:10px;color:#52627e;margin:4px 0 0">→ ${r}</p>`).join('')}
+          </div>
+        `).join('')}`;
+    }
+    document.getElementById('recommendationsList').innerHTML = recHtml || '<p>Complete more interviews for personalized recommendations.</p>';
+
+    document.getElementById('reportSubtitle').textContent =
+      `${meta.role} · ${meta.interview_type} · Readiness: ${data.readinessLevel || 'Developing'}`;
+  }
+
+  document.getElementById('printBtn').addEventListener('click', () => window.print());
+  document.getElementById('shareBtn').addEventListener('click', () => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      alert('Report link copied to clipboard!');
+    });
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+    e.preventDefault();
+    await signOut(auth);
+    window.location.href = 'login.html';
+  });
+</script>
+</body>
+</html>

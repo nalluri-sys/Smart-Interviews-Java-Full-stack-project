@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Dashboard | Smart Interview Coach</title>
+  <meta name="description" content="Your Smart Interview Coach dashboard — view your stats, recent interviews, and start a new practice session.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app-shell" id="appShell" style="display:none">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" role="navigation" aria-label="Primary navigation">
+    <div class="brand">
+      <span class="brand-mark">🎙</span>
+      <div><strong>Smart Interview</strong><small>COACH</small></div>
+    </div>
+    <div class="side-title">Workspace</div>
+    <nav class="nav">
+      <a href="dashboard.html" class="active" id="nav-dashboard"><span class="nav-icon">▦</span>Dashboard</a>
+      <a href="interview.html" id="nav-interview"><span class="nav-icon">◉</span>New Interview</a>
+      <a href="my-interviews.html" id="nav-my-interviews"><span class="nav-icon">▤</span>My Interviews</a>
+      <a href="report.html" id="nav-reports"><span class="nav-icon">▥</span>Reports</a>
+      <a href="profile.html" id="nav-profile"><span class="nav-icon">♙</span>Profile</a>
+    </nav>
+    <div class="side-bottom">
+      <a href="profile.html#settings"><span class="nav-icon">⚙</span>Settings</a>
+      <a href="#" id="logoutBtn"><span class="nav-icon">↪</span>Logout</a>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main" role="main">
+    <header class="topbar">
+      <div>
+        <h1 id="greetingText">Loading…</h1>
+        <p class="eyebrow" id="greetingSubtitle">Fetching your dashboard…</p>
+      </div>
+      <div class="user-menu">
+        <div class="avatar" id="userAvatar">?</div>
+        <span id="userName">…</span>
+      </div>
+    </header>
+
+    <!-- Stats -->
+    <section class="grid stats" aria-label="Performance statistics">
+      <div class="card stat" id="statTotal">
+        <div>
+          <div class="label">Total Interviews</div>
+          <div class="value" id="statTotalValue">—</div>
+          <div class="trend" id="statTotalTrend">Loading…</div>
+        </div>
+        <span class="stat-icon">▣</span>
+      </div>
+      <div class="card stat" id="statAvg">
+        <div>
+          <div class="label">Average Score</div>
+          <div class="value" id="statAvgValue">—</div>
+          <div class="trend" id="statAvgTrend">Loading…</div>
+        </div>
+        <span class="stat-icon">✦</span>
+      </div>
+      <div class="card stat" id="statBest">
+        <div>
+          <div class="label">Best Score</div>
+          <div class="value" id="statBestValue">—</div>
+          <div class="trend" id="statBestTrend">Loading…</div>
+        </div>
+        <span class="stat-icon">♛</span>
+      </div>
+      <div class="card stat" id="statImprove">
+        <div>
+          <div class="label">Improvement</div>
+          <div class="value" id="statImproveValue">—</div>
+          <div class="trend" id="statImproveTrend">Loading…</div>
+        </div>
+        <span class="stat-icon">↗</span>
+      </div>
+    </section>
+
+    <!-- Hero CTA -->
+    <section class="card hero">
+      <div>
+        <h2>Ready for your next interview?</h2>
+        <p>Practice with AI-powered questions tailored to your role and get instant feedback on every answer.</p>
+        <a class="btn light" href="interview.html" id="startInterviewBtn">＋ Start New Interview</a>
+      </div>
+      <div class="hero-art">👩🏻‍💻</div>
+    </section>
+
+    <!-- Recent Interviews & Performance -->
+    <section class="grid two-col" style="margin-top:15px">
+      <div class="card">
+        <div class="card-head">
+          <h2>Recent Interviews</h2>
+          <a href="my-interviews.html">View All</a>
+        </div>
+        <div id="recentInterviewsList">
+          <div class="empty">Loading your interviews…</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Performance Overview</h2>
+          <a href="report.html">Details</a>
+        </div>
+        <div id="performanceOverview">
+          <div class="empty performance-empty">Loading performance data…</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Loading overlay -->
+<div id="loadingOverlay" style="position:fixed;inset:0;background:#060d1f;display:grid;place-items:center;z-index:9999">
+  <div style="text-align:center;color:#fff">
+    <div style="font-size:40px;margin-bottom:16px">🎙</div>
+    <div style="font-size:16px;font-weight:700;margin-bottom:8px">Smart Interview Coach</div>
+    <div style="color:#567099;font-size:13px">Loading your workspace…</div>
+  </div>
+</div>
+
+<script type="module">
+  import { auth, signOut, onAuthStateChanged } from './js/supabase-config.js';
+  import { getProfile, getStats, getInterviews } from './js/api.js';
+
+  // Guard: redirect to login if not authenticated
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.location.href = 'login.html';
+      return;
+    }
+
+    // Show shell
+    document.getElementById('loadingOverlay').style.display = 'none';
+    document.getElementById('appShell').style.display = 'flex';
+
+    // Set user info from Supabase Auth
+    const name = user.displayName || user.email?.split('@')[0] || 'User';
+    document.getElementById('userName').textContent = name;
+    document.getElementById('userAvatar').textContent = name[0].toUpperCase();
+
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
+    document.getElementById('greetingText').textContent = `${greeting}, ${name.split(' ')[0]}! 👋`;
+
+    // Load data
+    try {
+      const [profile, stats, interviews] = await Promise.allSettled([
+        getProfile(),
+        getStats(),
+        getInterviews(0, 5)
+      ]);
+
+      // Update stats
+      if (stats.status === 'fulfilled') {
+        const s = stats.value;
+        document.getElementById('statTotalValue').textContent = s.totalInterviews || 0;
+        document.getElementById('statAvgValue').textContent = (s.averageScore || 0) + '%';
+        document.getElementById('statBestValue').textContent = (s.bestScore || 0) + '%';
+        document.getElementById('statImproveValue').textContent = (s.improvement >= 0 ? '+' : '') + (s.improvement || 0) + '%';
+
+        if (s.totalInterviews === 0) {
+          document.getElementById('statTotalTrend').textContent = 'Start your first interview';
+          document.getElementById('statAvgTrend').textContent = 'No scores yet';
+          document.getElementById('statBestTrend').textContent = 'Complete an interview to begin';
+          document.getElementById('statImproveTrend').textContent = 'Your progress starts here';
+          document.getElementById('greetingSubtitle').textContent = 'Start your first interview to see your stats!';
+        } else {
+          document.getElementById('statTotalTrend').textContent = `${s.totalInterviews} completed sessions`;
+          document.getElementById('statAvgTrend').textContent = s.averageScore >= 70 ? '↑ Great performance!' : 'Keep practicing!';
+          document.getElementById('statBestTrend').textContent = 'Personal best score';
+          document.getElementById('statImproveTrend').textContent = s.improvement >= 0 ? '↑ Trending up' : '↓ Keep going';
+          document.getElementById('greetingSubtitle').textContent = 'Keep going! You\'re making great progress.';
+        }
+      }
+
+      // Recent Interviews
+      if (interviews.status === 'fulfilled' && interviews.value?.length) {
+        const list = document.getElementById('recentInterviewsList');
+        list.innerHTML = `<table class="table">
+          <thead><tr>
+            <th>Role</th><th>Type</th><th>Score</th><th>Status</th><th></th>
+          </tr></thead>
+          <tbody>
+            ${interviews.value.map(iv => `
+              <tr>
+                <td><strong>${iv.role || '—'}</strong></td>
+                <td>${iv.interview_type || '—'}</td>
+                <td>${iv.overall_score != null ? Math.round(iv.overall_score) + '%' : '—'}</td>
+                <td><span class="status" style="${iv.status === 'completed' ? '' : 'background:#fff5e0;color:#a06000'}">${iv.status}</span></td>
+                <td><a class="btn ghost" href="interview-room.html?id=${iv.id}" style="padding:4px 10px;font-size:9px">${iv.status === 'completed' ? 'View' : 'Resume'}</a></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>`;
+
+        // Performance bars
+        if (stats.status === 'fulfilled' && stats.value.totalInterviews > 0) {
+          const s = stats.value;
+          document.getElementById('performanceOverview').innerHTML = `
+            <div class="progress-row">
+              <div>
+                <div class="progress-label"><span>Technical</span><span>${s.averageScore || 0}%</span></div>
+                <div class="bar"><span style="width:${s.averageScore || 0}%"></span></div>
+              </div>
+            </div>
+            <div class="progress-row">
+              <div>
+                <div class="progress-label"><span>Communication</span><span>${Math.min(100, (s.averageScore || 0) + 5)}%</span></div>
+                <div class="bar green"><span style="width:${Math.min(100, (s.averageScore || 0) + 5)}%"></span></div>
+              </div>
+            </div>
+            <div class="progress-row">
+              <div>
+                <div class="progress-label"><span>Behavioral</span><span>${Math.max(0, (s.averageScore || 0) - 3)}%</span></div>
+                <div class="bar"><span style="width:${Math.max(0, (s.averageScore || 0) - 3)}%"></span></div>
+              </div>
+            </div>
+            <p style="font-size:9px;color:#9aabb8;text-align:right;margin-top:8px">Based on ${s.totalInterviews} session(s)</p>
+          `;
+        }
+      } else {
+        document.getElementById('recentInterviewsList').innerHTML = `
+          <div class="empty">No interviews yet.<br>
+            <a class="btn ghost" href="interview.html" style="margin-top:12px;display:inline-block">Start your first interview</a>
+          </div>`;
+        document.getElementById('performanceOverview').innerHTML = `
+          <div class="empty performance-empty">Complete an interview to see your performance.</div>`;
+      }
+
+    } catch (err) {
+      console.error('Dashboard load error:', err);
+      document.getElementById('greetingSubtitle').textContent = 'Could not load all data. ' + err.message;
+    }
+  });
+
+  // Logout
+  document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+    e.preventDefault();
+    await signOut(auth);
+    window.location.href = 'login.html';
+  });
+</script>
+</body>
+</html>

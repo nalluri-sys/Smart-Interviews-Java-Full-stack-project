@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Profile | Smart Interview Coach</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app-shell" id="appShell" style="display:none">
+  <aside class="sidebar" role="navigation">
+    <div class="brand"><span class="brand-mark">🎙</span><div><strong>Smart Interview</strong><small>COACH</small></div></div>
+    <div class="side-title">Workspace</div>
+    <nav class="nav">
+      <a href="dashboard.html"><span class="nav-icon">▦</span>Dashboard</a>
+      <a href="interview.html"><span class="nav-icon">◉</span>New Interview</a>
+      <a href="my-interviews.html"><span class="nav-icon">▤</span>My Interviews</a>
+      <a href="report.html"><span class="nav-icon">▥</span>Reports</a>
+      <a href="profile.html" class="active"><span class="nav-icon">♙</span>Profile</a>
+    </nav>
+    <div class="side-bottom">
+      <a href="#" id="logoutBtn"><span class="nav-icon">↪</span>Logout</a>
+    </div>
+  </aside>
+
+  <main class="main" role="main">
+    <header class="topbar">
+      <div><h1>My Profile</h1><p class="eyebrow">Manage your account, skills, and preferences</p></div>
+    </header>
+
+    <div class="profile-layout">
+      <!-- Left Card -->
+      <div>
+        <div class="card profile-card">
+          <div class="profile-avatar" id="avatarDisplay">?</div>
+          <h2 id="profileName">Loading…</h2>
+          <p class="eyebrow" id="profileEmail">—</p>
+          <div class="profile-meta">
+            <div>
+              <span>Target Role</span>
+              <strong id="profileRole">—</strong>
+            </div>
+            <div>
+              <span>Experience Level</span>
+              <strong id="profileExp">—</strong>
+            </div>
+            <div>
+              <span>Member since</span>
+              <strong id="profileSince">—</strong>
+            </div>
+            <div>
+              <span>Profile Status</span>
+              <strong id="profileStatus">—</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activity Heatmap -->
+        <div class="card activity-card" style="margin-top:14px">
+          <div class="activity-heading">
+            <div><h2>Practice Activity</h2><p class="eyebrow" id="activitySummary">Loading…</p></div>
+            <strong id="streakCount" style="color:#2563eb;font-size:11px">— day streak</strong>
+          </div>
+          <div class="heatmap-wrap">
+            <div class="heatmap-months" id="heatmapMonths"></div>
+            <div class="activity-heatmap" id="heatmap" role="grid" aria-label="Practice activity heatmap"></div>
+          </div>
+          <div class="heatmap-footer">
+            <span>Less</span>
+            <div class="heat-cell"></div>
+            <div class="heat-cell level-1"></div>
+            <div class="heat-cell level-2"></div>
+            <div class="heat-cell level-3"></div>
+            <div class="heat-cell level-4"></div>
+            <span>More</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Edit Tabs -->
+      <div>
+        <nav class="tabs" role="tablist">
+          <a href="#" class="active" data-tab="info" role="tab" aria-selected="true">Profile Info</a>
+          <a href="#" data-tab="skills" role="tab" aria-selected="false">Skills &amp; Goals</a>
+          <a href="#" data-tab="settings" id="settings-tab" role="tab" aria-selected="false">Settings</a>
+        </nav>
+
+        <!-- Profile Info Tab -->
+        <div id="tab-info">
+          <div class="card" style="padding:22px">
+            <div id="saveSuccess" style="display:none;background:#e8faf4;border:1px solid #c0ead8;color:#13a87c;padding:10px;border-radius:6px;font-size:11px;margin-bottom:14px">
+              ✅ Profile updated successfully!
+            </div>
+            <form id="profileForm" novalidate>
+              <div class="form-grid">
+                <label class="field" for="editName">
+                  Full Name
+                  <input type="text" id="editName" name="full_name" placeholder="Your full name">
+                </label>
+                <label class="field" for="editEmail">
+                  Email
+                  <input type="email" id="editEmail" name="email" disabled style="background:#f5f8fc;color:#9aabb8">
+                </label>
+                <label class="field" for="editRole">
+                  Target Role
+                  <input type="text" id="editRole" name="target_role" placeholder="e.g. Software Engineer">
+                </label>
+                <label class="field" for="editExp">
+                  Experience Level
+                  <select id="editExp" name="experience_level">
+                    <option value="">Select…</option>
+                    <option>Entry Level (0-1 years)</option>
+                    <option>Junior (1-3 years)</option>
+                    <option>Mid-Level (3-5 years)</option>
+                    <option>Senior (5-8 years)</option>
+                    <option>Expert (8+ years)</option>
+                  </select>
+                </label>
+                <label class="field wide" for="editGoals">
+                  Career Goals
+                  <textarea id="editGoals" name="career_goals" placeholder="Describe your career goals and target companies…"></textarea>
+                </label>
+              </div>
+              <div style="display:flex;justify-content:flex-end;margin-top:16px">
+                <button class="btn" type="submit" id="saveProfileBtn">Save Changes</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Skills Tab -->
+        <div id="tab-skills" style="display:none">
+          <div class="card" style="padding:22px">
+            <form id="skillsForm">
+              <label class="field" for="editSkills">
+                Technical Skills (comma-separated)
+                <textarea id="editSkills" name="skills" placeholder="Java, Spring Boot, React, Python, SQL…" rows="3"></textarea>
+              </label>
+
+              <!-- AI Profile Summary (if available) -->
+              <div id="aiProfileSection" style="display:none;margin-top:16px">
+                <h3>🤖 AI Profile Analysis</h3>
+                <div id="aiProfileContent" style="font-size:11px;color:#52627e;line-height:1.7;padding:14px;background:#f8fbff;border-radius:6px;border:1px solid #dce7f5"></div>
+              </div>
+
+              <div style="display:flex;justify-content:flex-end;margin-top:16px">
+                <button class="btn" type="submit" id="saveSkillsBtn">Save Skills</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="tab-settings" style="display:none">
+          <div class="card" style="padding:22px">
+            <h2 style="margin-bottom:16px" id="settings">Preferences</h2>
+
+            <div class="setting-row">
+              <div>
+                <strong style="font-size:11px">Dark Mode</strong>
+                <p style="color:#9aabb8;margin:2px 0 0;font-size:10px">Toggle dark/light theme</p>
+              </div>
+              <button class="toggle" id="darkModeToggle" role="switch" aria-checked="false" type="button"></button>
+            </div>
+
+            <div class="setting-row">
+              <div>
+                <strong style="font-size:11px">Email Notifications</strong>
+                <p style="color:#9aabb8;margin:2px 0 0;font-size:10px">Weekly practice reminders</p>
+              </div>
+              <button class="toggle" id="notifToggle" role="switch" aria-checked="true" type="button"></button>
+            </div>
+
+            <div class="setting-row">
+              <div>
+                <strong style="font-size:11px">Voice Feedback</strong>
+                <p style="color:#9aabb8;margin:2px 0 0;font-size:10px">AI reads questions aloud</p>
+              </div>
+              <button class="toggle on" id="voiceToggle" role="switch" aria-checked="true" type="button"></button>
+            </div>
+
+            <hr style="border:0;border-top:1px solid #edf2f8;margin:20px 0">
+
+            <h3 style="font-size:12px;color:#374151;margin-bottom:12px">Account Actions</h3>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button class="btn ghost" type="button" id="exportDataBtn">📦 Export My Data</button>
+              <button class="btn danger" type="button" id="deleteAccountBtn">🗑️ Delete Account</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="loadingOverlay" style="position:fixed;inset:0;background:#060d1f;display:grid;place-items:center;z-index:9999">
+  <div style="text-align:center;color:#fff"><div style="font-size:40px">🎙</div><div style="color:#567099;margin-top:8px">Loading…</div></div>
+</div>
+
+<script type="module">
+  import { auth, signOut, onAuthStateChanged } from './js/supabase-config.js';
+  import { getProfile, updateProfile, getActivity } from './js/api.js';
+
+  let profileData = null;
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    document.getElementById('loadingOverlay').style.display = 'none';
+    document.getElementById('appShell').style.display = 'flex';
+
+    try {
+      profileData = await getProfile();
+      fillProfile(profileData, user);
+      await loadHeatmap(profileData);
+    } catch (err) {
+      console.error('Profile load error:', err);
+    }
+
+    // Handle deep link to settings tab
+    if (location.hash === '#settings') {
+      switchTab('settings');
+    }
+  });
+
+  function fillProfile(p, user) {
+    document.getElementById('profileName').textContent = p.full_name || user.displayName || 'User';
+    document.getElementById('profileEmail').textContent = p.email || user.email || '';
+    document.getElementById('avatarDisplay').textContent = (p.full_name || user.displayName || 'U')[0].toUpperCase();
+    document.getElementById('profileRole').textContent = p.target_role || 'Not set';
+    document.getElementById('profileExp').textContent = p.experience_level || 'Not set';
+    document.getElementById('profileSince').textContent = p.created_at
+      ? new Date(p.created_at).toLocaleDateString('en-IN', { dateStyle: 'medium' }) : '—';
+    document.getElementById('profileStatus').textContent = p.profile_status || '—';
+
+    // Fill edit form
+    document.getElementById('editName').value = p.full_name || '';
+    document.getElementById('editEmail').value = p.email || user.email || '';
+    document.getElementById('editRole').value = p.target_role || '';
+    document.getElementById('editGoals').value = p.career_goals || '';
+    if (p.experience_level) {
+      document.getElementById('editExp').value = p.experience_level;
+    }
+
+    // Skills tab
+    const skills = Array.isArray(p.skills) ? p.skills.join(', ') : (p.skills || '');
+    document.getElementById('editSkills').value = skills;
+
+    // AI Profile
+    if (p.ai_profile) {
+      const ai = p.ai_profile;
+      document.getElementById('aiProfileSection').style.display = 'block';
+      let html = '';
+      if (ai.candidateSummary) html += `<p><strong>Summary:</strong> ${ai.candidateSummary}</p>`;
+      if (ai.experienceLevel) html += `<p><strong>Experience:</strong> ${ai.experienceLevel}</p>`;
+      if (ai.strengths?.length) html += `<p><strong>Strengths:</strong> ${ai.strengths.join(', ')}</p>`;
+      if (ai.skillGaps?.length) html += `<p><strong>Skill Gaps:</strong> ${ai.skillGaps.join(', ')}</p>`;
+      if (ai.interviewFocusAreas?.length) html += `<p><strong>Focus Areas:</strong> ${ai.interviewFocusAreas.join(', ')}</p>`;
+      document.getElementById('aiProfileContent').innerHTML = html || '<p>No AI analysis available. Upload a resume to get personalized insights.</p>';
+    }
+  }
+
+  // Tab switching
+  document.querySelectorAll('[data-tab]').forEach(tab => {
+    tab.addEventListener('click', (e) => {
+      e.preventDefault();
+      switchTab(tab.dataset.tab);
+    });
+  });
+
+  function switchTab(name) {
+    document.querySelectorAll('[data-tab]').forEach(t => {
+      t.classList.toggle('active', t.dataset.tab === name);
+    });
+    ['info', 'skills', 'settings'].forEach(t => {
+      const el = document.getElementById(`tab-${t}`);
+      if (el) el.style.display = t === name ? 'block' : 'none';
+    });
+  }
+
+  // Save profile
+  document.getElementById('profileForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('saveProfileBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+
+    try {
+      await updateProfile({
+        full_name: document.getElementById('editName').value.trim(),
+        target_role: document.getElementById('editRole').value.trim(),
+        experience_level: document.getElementById('editExp').value,
+        career_goals: document.getElementById('editGoals').value.trim(),
+      });
+      document.getElementById('saveSuccess').style.display = 'block';
+      setTimeout(() => document.getElementById('saveSuccess').style.display = 'none', 3000);
+    } catch (err) {
+      alert('Save failed: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Save Changes';
+    }
+  });
+
+  // Save skills
+  document.getElementById('skillsForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('saveSkillsBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+    try {
+      const skills = document.getElementById('editSkills').value
+        .split(',').map(s => s.trim()).filter(Boolean);
+      await updateProfile({ skills });
+      alert('Skills saved successfully!');
+    } catch (err) {
+      alert('Save failed: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Save Skills';
+    }
+  });
+
+  // Heatmap
+  async function loadHeatmap(profile) {
+    try {
+      const activity = await getActivity(12);
+      renderHeatmap(activity || []);
+    } catch {
+      renderHeatmap([]);
+    }
+  }
+
+  function renderHeatmap(activity) {
+    const heatmap = document.getElementById('heatmap');
+    const actByDate = {};
+    activity.forEach(a => { actByDate[a.activity_date] = a.completed_count || 0; });
+
+    const today = new Date();
+    const weeks = 12;
+    const cells = [];
+    const startDate = new Date(today);
+    startDate.setDate(startDate.getDate() - (weeks * 7 - 1));
+
+    // Align to Sunday
+    startDate.setDate(startDate.getDate() - startDate.getDay());
+
+    let totalDays = 0;
+    let streak = 0;
+
+    for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
+      const dateStr = d.toISOString().split('T')[0];
+      const count = actByDate[dateStr] || 0;
+      const level = count === 0 ? 0 : count === 1 ? 1 : count <= 3 ? 2 : count <= 5 ? 3 : 4;
+      if (count > 0) totalDays++;
+      cells.push({ dateStr, count, level });
+    }
+
+    // Calculate streak
+    for (let i = cells.length - 1; i >= 0; i--) {
+      if (cells[i].count > 0) streak++;
+      else break;
+    }
+
+    document.getElementById('streakCount').textContent = `${streak} day streak`;
+    document.getElementById('activitySummary').textContent = `${totalDays} active days in the last ${weeks} weeks`;
+
+    heatmap.innerHTML = cells.map(c => `
+      <button class="heat-cell level-${c.level}" type="button"
+        title="${c.dateStr}: ${c.count} session${c.count !== 1 ? 's' : ''}"
+        aria-label="${c.dateStr}: ${c.count} sessions"
+      ></button>
+    `).join('');
+  }
+
+  // Settings toggles
+  document.querySelectorAll('.toggle').forEach(toggle => {
+    toggle.addEventListener('click', () => {
+      toggle.classList.toggle('on');
+      toggle.setAttribute('aria-checked', toggle.classList.contains('on').toString());
+    });
+  });
+
+  // Dark mode
+  document.getElementById('darkModeToggle').addEventListener('click', () => {
+    document.documentElement.classList.toggle('dark');
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+    e.preventDefault();
+    await signOut(auth);
+    window.location.href = 'login.html';
+  });
+
+  document.getElementById('deleteAccountBtn').addEventListener('click', () => {
+    if (confirm('Are you sure you want to delete your account? This action cannot be undone. All your data will be permanently deleted.')) {
+      alert('Please contact support to delete your account: support@smartinterviewcoach.com');
+    }
+  });
+
+  document.getElementById('exportDataBtn').addEventListener('click', () => {
+    if (profileData) {
+      const blob = new Blob([JSON.stringify(profileData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'my-smart-interview-coach-data.json';
+      a.click();
+    }
+  });
+</script>
+</body>
+</html>

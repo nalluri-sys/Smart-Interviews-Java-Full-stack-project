@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Interview Room | Smart Interview Coach</title>
+  <meta name="description" content="Your live AI mock interview session.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="appShell" style="display:none">
+<div class="app-shell">
+
+  <!-- Sidebar (minimal during interview) -->
+  <aside class="sidebar" role="navigation" aria-label="Session navigation">
+    <div class="brand"><span class="brand-mark">🎙</span><div><strong>Interview Room</strong><small>LIVE SESSION</small></div></div>
+    <div style="flex:1"></div>
+    <div class="side-bottom">
+      <a href="dashboard.html"><span class="nav-icon">▦</span>Dashboard</a>
+      <a href="#" id="abandonBtn" style="color:#ff6b6b"><span class="nav-icon">✕</span>End Session</a>
+    </div>
+  </aside>
+
+  <main class="main" role="main">
+    <header class="topbar" style="margin-bottom:15px">
+      <div>
+        <h1 id="interviewTitle">Loading…</h1>
+        <p class="eyebrow" id="interviewSubtitle">Setting up your session</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <div class="session-timer" aria-live="polite">
+          <span class="pulse-dot" id="recDot" style="display:none"></span>
+          <strong id="timerDisplay">00:00</strong>
+        </div>
+        <button class="btn ghost" id="pauseBtn" type="button" style="font-size:10px;padding:7px 14px">⏸ Pause</button>
+      </div>
+    </header>
+
+    <!-- Interview Room Layout -->
+    <div class="interview-room" id="interviewRoom" style="display:none">
+
+      <!-- Left: Question Card -->
+      <div class="card question-card" id="questionCard">
+        <div>
+          <p class="tag" id="questionTag">Question 1 of 8</p>
+          <span id="questionCategory" style="display:inline-block;background:rgba(255,255,255,.12);color:#a0c4ff;font-size:9px;font-weight:700;padding:3px 9px;border-radius:20px;margin-bottom:12px"></span>
+        </div>
+        <h2 id="questionText" style="max-width:480px">Loading question…</h2>
+
+        <!-- Voice controls -->
+        <div style="margin-top:16px">
+          <div class="wave" id="waveIndicator" style="display:none">〜 〜 〜</div>
+          <p class="listening" id="listeningStatus" style="display:none">Listening…</p>
+
+          <div class="transcript" id="transcriptBox" style="display:none">
+            <strong id="transcriptWordCount">0 words</strong>
+            <span id="transcriptContent">Speak or type your answer below…</span>
+          </div>
+        </div>
+
+        <!-- Answer textarea -->
+        <textarea
+          id="answerBox"
+          class="answer-box"
+          placeholder="Type your answer here, or click 'Start Speaking' to use voice…"
+          rows="5"
+          aria-label="Your answer"
+        ></textarea>
+
+        <!-- Action buttons -->
+        <div class="interview-actions">
+          <button class="btn" id="voiceBtn" type="button">🎤 Start Speaking</button>
+          <button class="btn ghost" id="skipBtn" type="button">Skip →</button>
+          <button class="btn" id="submitAnswerBtn" type="button" style="background:#13a87c">✓ Submit Answer</button>
+        </div>
+      </div>
+
+      <!-- Right: Side Panel -->
+      <div class="side-panel">
+        <!-- Session Progress -->
+        <div class="card">
+          <div class="card-head" style="margin-bottom:10px"><h2>Session Progress</h2></div>
+          <div class="timer">
+            <span style="color:#71809f;font-size:10px">Question</span>
+            <strong id="questionProgress">1 / 8</strong>
+          </div>
+          <div class="session-progress">
+            <div class="bar" style="height:6px"><span id="progressBar" style="width:12%"></span></div>
+          </div>
+          <div id="questionNav" style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-top:10px"></div>
+        </div>
+
+        <!-- AI Feedback (after submission) -->
+        <div class="card" id="feedbackCard" style="display:none">
+          <div class="card-head" style="margin-bottom:10px">
+            <h2>AI Feedback</h2>
+            <span id="feedbackScore" style="font-size:18px;font-weight:800;color:#13a87c"></span>
+          </div>
+          <div id="feedbackContent" style="font-size:11px;color:#52627e;line-height:1.7"></div>
+          <div id="idealAnswerSection" style="display:none;margin-top:12px;padding:12px;background:#f8fbff;border-radius:6px;border:1px solid #dce7f5">
+            <p style="font-size:9px;font-weight:700;color:#2563eb;margin:0 0 6px">💡 IDEAL ANSWER</p>
+            <p id="idealAnswerText" style="font-size:10px;color:#374151;line-height:1.65;margin:0"></p>
+          </div>
+          <button class="btn ghost" id="nextQuestionBtn" type="button" style="width:100%;margin-top:14px;font-size:11px">
+            Next Question →
+          </button>
+        </div>
+
+        <!-- Tips -->
+        <div class="card tip">
+          <strong id="tipTitle">💡 Interview Tip</strong>
+          <p id="tipText" style="margin:6px 0 0">Use the STAR method for behavioral questions: Situation, Task, Action, Result.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Completion Screen -->
+    <div id="completionScreen" style="display:none;text-align:center;padding:60px 20px">
+      <div style="font-size:72px;margin-bottom:20px">🎉</div>
+      <h2 style="font-size:28px;margin:0 0 12px">Interview Complete!</h2>
+      <p style="color:#71809f;font-size:14px;margin-bottom:30px;max-width:400px;margin-left:auto;margin-right:auto">
+        Great work! Your AI report is being generated. This may take a moment.
+      </p>
+      <div id="completionSpinner" style="color:#71809f;margin-bottom:24px">⏳ Generating your performance report…</div>
+      <a class="btn" id="viewReportBtn" href="#" style="display:none">📊 View Full Report</a>
+      <a class="btn ghost" href="dashboard.html" style="margin-left:10px">← Back to Dashboard</a>
+    </div>
+  </main>
+</div>
+</div>
+
+<div id="loadingOverlay" style="position:fixed;inset:0;background:#060d1f;display:grid;place-items:center;z-index:9999">
+  <div style="text-align:center;color:#fff">
+    <div style="font-size:40px">🎙</div>
+    <div style="color:#567099;margin-top:8px">Preparing your interview…</div>
+  </div>
+</div>
+
+<script type="module">
+  import { auth, signOut, onAuthStateChanged } from './js/supabase-config.js';
+  import { getInterview, submitAnswer, completeInterview, updateInterviewStatus } from './js/api.js';
+
+  const params = new URLSearchParams(location.search);
+  const interviewId = params.get('id');
+
+  if (!interviewId) {
+    window.location.href = 'interview.html';
+  }
+
+  let interview = null;
+  let questions = [];
+  let currentIndex = 0;
+  let timerInterval = null;
+  let sessionSeconds = 0;
+  let isPaused = false;
+  let recognition = null;
+  let isListening = false;
+  let completedQuestions = new Set();
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    document.getElementById('loadingOverlay').style.display = 'none';
+    document.getElementById('appShell').style.display = 'block';
+
+    try {
+      const data = await getInterview(interviewId);
+      interview = data;
+      questions = data.questions || [];
+
+      document.getElementById('interviewTitle').textContent =
+        `${data.role} — ${data.interview_type} Interview`;
+      document.getElementById('interviewSubtitle').textContent =
+        `${data.difficulty} · ${questions.length} questions`;
+
+      document.getElementById('interviewRoom').style.display = 'grid';
+      startTimer();
+      renderQuestionNav();
+      showQuestion(0);
+      document.getElementById('recDot').style.display = 'block';
+
+    } catch (err) {
+      document.getElementById('interviewTitle').textContent = 'Error loading interview';
+      document.getElementById('interviewSubtitle').textContent = err.message;
+    }
+  });
+
+  function startTimer() {
+    timerInterval = setInterval(() => {
+      if (!isPaused) {
+        sessionSeconds++;
+        const m = String(Math.floor(sessionSeconds / 60)).padStart(2, '0');
+        const s = String(sessionSeconds % 60).padStart(2, '0');
+        document.getElementById('timerDisplay').textContent = `${m}:${s}`;
+      }
+    }, 1000);
+  }
+
+  function renderQuestionNav() {
+    const nav = document.getElementById('questionNav');
+    nav.style.gridTemplateColumns = `repeat(${Math.min(questions.length, 10)}, 1fr)`;
+    nav.innerHTML = questions.map((_, i) => `
+      <button class="heat-cell" id="navBtn-${i}" aria-label="Question ${i+1}"
+        onclick="jumpToQuestion(${i})" type="button"
+        style="cursor:pointer;width:100%;height:24px;border-radius:4px;font-size:9px;font-weight:700;color:#fff;background:#0d2d5a;border:1px solid #1a3c6d"
+      >${i+1}</button>
+    `).join('');
+  }
+
+  window.jumpToQuestion = (i) => { showQuestion(i); };
+
+  function showQuestion(index) {
+    if (index >= questions.length) {
+      finishInterview();
+      return;
+    }
+
+    currentIndex = index;
+    const q = questions[index];
+
+    document.getElementById('questionTag').textContent = `Question ${index + 1} of ${questions.length}`;
+    document.getElementById('questionCategory').textContent = q.category || 'General';
+    document.getElementById('questionText').textContent = q.question_text;
+    document.getElementById('answerBox').value = '';
+    document.getElementById('feedbackCard').style.display = 'none';
+    document.getElementById('transcriptBox').style.display = 'none';
+    document.getElementById('waveIndicator').style.display = 'none';
+    document.getElementById('listeningStatus').style.display = 'none';
+
+    // Update progress
+    const progress = Math.round(((index + 1) / questions.length) * 100);
+    document.getElementById('progressBar').style.width = `${progress}%`;
+    document.getElementById('questionProgress').textContent = `${index + 1} / ${questions.length}`;
+
+    // Update nav dots
+    questions.forEach((_, i) => {
+      const btn = document.getElementById(`navBtn-${i}`);
+      if (btn) {
+        btn.style.background = completedQuestions.has(i) ? '#13a87c'
+          : i === index ? '#2563eb' : '#0d2d5a';
+      }
+    });
+
+    // Tips
+    const tips = [
+      { title: '💡 STAR Method', text: 'Structure behavioral answers: Situation → Task → Action → Result.' },
+      { title: '💡 Be Specific', text: 'Use concrete examples and numbers. "I increased performance by 40%" is better than "I improved things".' },
+      { title: '💡 Think Aloud', text: 'For technical questions, explain your reasoning as you work through the problem.' },
+      { title: '💡 Stay Calm', text: 'It\'s OK to pause and think. Interviewers appreciate thoughtful, organized answers.' },
+    ];
+    const tip = tips[index % tips.length];
+    document.getElementById('tipTitle').textContent = tip.title;
+    document.getElementById('tipText').textContent = tip.text;
+
+    // Ask the question via TTS
+    speakQuestion(q.question_text);
+  }
+
+  function speakQuestion(text) {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.rate = 0.92;
+      utter.pitch = 1.0;
+      utter.volume = 0.9;
+      window.speechSynthesis.speak(utter);
+    }
+  }
+
+  // Voice recognition
+  document.getElementById('voiceBtn').addEventListener('click', () => {
+    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+      alert('Speech recognition is not supported in this browser. Please use Chrome or Edge.');
+      return;
+    }
+
+    if (isListening) {
+      recognition?.stop();
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      isListening = true;
+      document.getElementById('voiceBtn').textContent = '⏹ Stop Listening';
+      document.getElementById('voiceBtn').style.background = '#ee5670';
+      document.getElementById('waveIndicator').style.display = 'block';
+      document.getElementById('listeningStatus').style.display = 'block';
+      document.getElementById('transcriptBox').style.display = 'block';
+    };
+
+    recognition.onresult = (event) => {
+      let transcript = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      document.getElementById('answerBox').value = transcript;
+      document.getElementById('transcriptContent').textContent = transcript;
+      const words = transcript.trim().split(/\s+/).filter(Boolean).length;
+      document.getElementById('transcriptWordCount').textContent = `${words} word${words !== 1 ? 's' : ''}`;
+    };
+
+    recognition.onend = () => {
+      isListening = false;
+      document.getElementById('voiceBtn').textContent = '🎤 Start Speaking';
+      document.getElementById('voiceBtn').style.background = '';
+      document.getElementById('waveIndicator').style.display = 'none';
+      document.getElementById('listeningStatus').style.display = 'none';
+    };
+
+    recognition.onerror = (e) => {
+      console.warn('Speech recognition error:', e.error);
+      recognition.stop();
+    };
+
+    recognition.start();
+  });
+
+  // Submit answer
+  document.getElementById('submitAnswerBtn').addEventListener('click', async () => {
+    const answerText = document.getElementById('answerBox').value.trim();
+    if (!answerText) {
+      alert('Please provide an answer before submitting.');
+      return;
+    }
+
+    if (recognition && isListening) recognition.stop();
+
+    const btn = document.getElementById('submitAnswerBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Evaluating…';
+
+    try {
+      const q = questions[currentIndex];
+      const result = await submitAnswer(
+        interviewId,
+        q.id,
+        q.question_text,
+        answerText
+      );
+
+      completedQuestions.add(currentIndex);
+
+      // Update nav dot
+      const navBtn = document.getElementById(`navBtn-${currentIndex}`);
+      if (navBtn) navBtn.style.background = '#13a87c';
+
+      // Show feedback
+      const feedbackCard = document.getElementById('feedbackCard');
+      feedbackCard.style.display = 'block';
+
+      const score = result.overallScore || result.score || 0;
+      document.getElementById('feedbackScore').textContent = Math.round(score) + '/100';
+
+      let feedbackHtml = '';
+      if (result.feedback) feedbackHtml += `<p><strong>Feedback:</strong> ${result.feedback}</p>`;
+      if (result.strengths?.length) {
+        feedbackHtml += `<p><strong>✅ Strengths:</strong><br>${result.strengths.map(s => `• ${s}`).join('<br>')}</p>`;
+      }
+      if (result.improvements?.length) {
+        feedbackHtml += `<p><strong>⚠️ Improve:</strong><br>${result.improvements.map(s => `• ${s}`).join('<br>')}</p>`;
+      }
+      if (result.fillerWords?.length) {
+        feedbackHtml += `<p><strong>🗣️ Filler words:</strong> ${result.fillerWords.join(', ')}</p>`;
+      }
+      document.getElementById('feedbackContent').innerHTML = feedbackHtml;
+
+      if (result.idealAnswer) {
+        document.getElementById('idealAnswerSection').style.display = 'block';
+        document.getElementById('idealAnswerText').textContent = result.idealAnswer;
+      }
+
+      btn.textContent = '✓ Submitted';
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = '✓ Submit Answer';
+      alert('Evaluation failed: ' + err.message);
+    }
+  });
+
+  // Next question
+  document.getElementById('nextQuestionBtn').addEventListener('click', () => {
+    if (currentIndex + 1 >= questions.length) {
+      finishInterview();
+    } else {
+      showQuestion(currentIndex + 1);
+    }
+  });
+
+  // Skip
+  document.getElementById('skipBtn').addEventListener('click', () => {
+    if (currentIndex + 1 >= questions.length) {
+      if (confirm('This is the last question. Do you want to finish the interview?')) {
+        finishInterview();
+      }
+    } else {
+      showQuestion(currentIndex + 1);
+    }
+  });
+
+  // Pause/Resume
+  document.getElementById('pauseBtn').addEventListener('click', async () => {
+    isPaused = !isPaused;
+    document.getElementById('pauseBtn').textContent = isPaused ? '▶ Resume' : '⏸ Pause';
+    document.getElementById('recDot').style.display = isPaused ? 'none' : 'block';
+    await updateInterviewStatus(interviewId, isPaused ? 'paused' : 'in_progress');
+  });
+
+  // Abandon
+  document.getElementById('abandonBtn').addEventListener('click', async () => {
+    if (confirm('Are you sure you want to end this session? Your completed answers will be saved.')) {
+      clearInterval(timerInterval);
+      if (recognition) recognition.stop();
+      window.speechSynthesis?.cancel();
+      await updateInterviewStatus(interviewId, 'abandoned');
+      window.location.href = 'dashboard.html';
+    }
+  });
+
+  async function finishInterview() {
+    clearInterval(timerInterval);
+    if (recognition) recognition.stop();
+    window.speechSynthesis?.cancel();
+
+    document.getElementById('interviewRoom').style.display = 'none';
+    document.getElementById('completionScreen').style.display = 'block';
+    document.getElementById('recDot').style.display = 'none';
+
+    try {
+      const result = await completeInterview(interviewId);
+      document.getElementById('completionSpinner').textContent =
+        `🏆 Score: ${Math.round(result.overallScore || 0)}% — Report generated!`;
+
+      const reportBtn = document.getElementById('viewReportBtn');
+      reportBtn.href = `report.html?id=${interviewId}`;
+      reportBtn.style.display = 'inline-flex';
+    } catch (err) {
+      document.getElementById('completionSpinner').textContent =
+        'Report generation failed: ' + err.message;
+    }
+  }
+</script>
+</body>
+</html>
